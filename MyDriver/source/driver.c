@@ -10,6 +10,7 @@ VISUAl STUDIO 2019 COMMUNITY
 
 DRIVER_UNLOAD Unload;
 DRIVER_DISPATCH StubFunc;
+DRIVER_DISPATCH WriteWorker;
 
 NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPath)
 {
@@ -41,14 +42,14 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	}
 
 	for (int i = 0; i < IRP_MJ_MAXIMUM_FUNCTION; ++i)
-	{
+	{ 
 		DriverObject->MajorFunction[i] = StubFunc;
 	}
 
 	//DriverObject->MajorFunction[IRP_MJ_READ] = ReadWorker;
-	//DriverObject->MajorFunction[IRP_MJ_WRITE] = WriteWorker;
+	DriverObject->MajorFunction[IRP_MJ_WRITE] = WriteWorker;
 
-	DbgPrint("Success driver installation!");
+	DbgPrint("Success driver installation!\r\n");
 
 	return status;
 }
@@ -98,6 +99,39 @@ NTSTATUS  StubFunc(PDEVICE_OBJECT DriverObject, PIRP Irp)
 
 
 	Irp->IoStatus.Information = 0;
+	Irp->IoStatus.Status = status;
+	IoCompleteRequest(Irp,IO_NO_INCREMENT);
+	
+	return status;
+}
+
+
+_Use_decl_annotations_
+NTSTATUS  WriteWorker(PDEVICE_OBJECT DriverObject, PIRP Irp)
+{
+	UNREFERENCED_PARAMETER(DriverObject);
+	PVOID pBuffer = NULL;
+	ULONG ulSize = 0;
+	UNICODE_STRING str = RTL_CONSTANT_STRING(L"Hello, ");
+			
+	PIO_STACK_LOCATION IrpStack = IoGetCurrentIrpStackLocation(Irp);
+	
+	const NTSTATUS status = STATUS_SUCCESS;
+
+	ulSize = IrpStack->Parameters.Write.Length;
+	pBuffer = Irp->UserBuffer;
+	//DbgBreakPoint();
+		
+#if DBG
+        DbgPrint("Run TestWrite");
+        DbgPrint("ulSize:  %u", ulSize);
+        DbgPrint("pBuffer: %s",str);
+	    DbgPrint("pBuffer: %s",pBuffer);
+	    DbgPrint("\r\n");
+#endif	
+	
+	
+	Irp->IoStatus.Information = ulSize;
 	Irp->IoStatus.Status = status;
 	IoCompleteRequest(Irp,IO_NO_INCREMENT);
 	

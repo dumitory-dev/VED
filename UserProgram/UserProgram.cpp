@@ -26,7 +26,7 @@ int main(void)
 			throw std::runtime_error("Fail open driver! Code - " + std::to_string(GetLastError()));
 		}
 
-		smart_handle file_ptr(handle_file,[](void* handle)
+		const smart_handle file_ptr(handle_file,[](void* handle)
 		{
 			if (handle == INVALID_HANDLE_VALUE)
 				return;
@@ -35,7 +35,27 @@ int main(void)
 			
 		});
 
-		std::cout<<"SUCCESS!";
+		std::cout<<"SUCCESS! Type any key.";
+
+		std::cin.get();
+
+
+		
+		char outBuffer[] = "This is a test string";
+		DWORD outCount = sizeof(outBuffer);
+		DWORD bW;
+
+		if (!::WriteFile(file_ptr.get(),
+			outBuffer,
+			outCount,
+			&bW,nullptr))
+		{
+			std::cout<<"Error write!"<<std::endl;
+		}
+
+		std::cin.get();
+		std::cin>>bW;
+		
 		
 	}
 	catch (const std::exception & error)
