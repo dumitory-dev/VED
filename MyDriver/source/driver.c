@@ -8,9 +8,14 @@ SDK VERSION: 10.0.18362.0
 VISUAl STUDIO 2019 COMMUNITY
 */
 
+#define DEVICE_SEND CTL_CODE(FILE_DEVICE_UNKNOWN,0x801,METHOD_BUFFERED,FILE_WRITE_DATA)
+#define DEVICE_REC CTL_CODE(FILE_DEVICE_UNKNOWN,0x802,METHOD_BUFFERED,FILE_READ_DATA)
+
+
 DRIVER_UNLOAD Unload;
 DRIVER_DISPATCH StubFunc;
 DRIVER_DISPATCH WriteWorker;
+DRIVER_DISPATCH CTLWriteRead;
 
 NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPath)
 {
@@ -46,7 +51,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		DriverObject->MajorFunction[i] = StubFunc;
 	}
 
-	//DriverObject->MajorFunction[IRP_MJ_READ] = ReadWorker;
+    DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = CTLWriteRead;
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = WriteWorker;
 
 	DbgPrint("Success driver installation!\r\n");
@@ -61,6 +66,42 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
    For more information about the requirements for function declarations, see Declaring Functions by Using Function Role Types for WDM Drivers.
    For information about _Use_decl_annotations_, see Annotating Function Behavior.
 */
+
+_Use_decl_annotations_
+NTSTATUS CTLWriteRead(PDEVICE_OBJECT DriverObject, PIRP Irp)
+{
+	UNREFERENCED_PARAMETER(DriverObject);
+	
+	PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(Irp);
+	NTSTATUS status = STATUS_SUCCESS;
+	ULONG returnLength = 0;
+	PVOID buffer = Irp->AssociatedIrp.SystemBuffer;
+	ULONG inLength = IrpSp->Parameters.DeviceIoControl.InputBufferLength;
+	ULONG OutputLength = IrpSp->Parameters.DeviceIoControl.OutputBufferLength;
+	UCHAR usString[] = "www.code.hut1.ru";
+	
+	switch (IrpSp->Parameters.DeviceIoControl.IoControlCode)
+	{
+	case DEVICE_SEND:
+		DbgPrint("Send data is %ws \r\n",(WCHAR*)buffer);
+		returnLength = inLength;
+		break;
+	case DEVICE_REC:
+		RtlCopyMemory(Irp->AssociatedIrp.SystemBuffer,&usString,OutputLength);
+		DbgPrint("Send data is %s \r\n",usString);
+		returnLength = sizeof(usString);
+		break;
+	default:
+		status = STATUS_INVALID_PARAMETER;
+		break;
+		
+	}
+	Irp->IoStatus.Status = status;
+	Irp->IoStatus.Information = returnLength;
+	IoCompleteRequest(Irp,IO_NO_INCREMENT);
+
+	return status;
+}
 
 _Use_decl_annotations_
 VOID  Unload(struct _DRIVER_OBJECT* DriverObject)
@@ -80,7 +121,7 @@ NTSTATUS  StubFunc(PDEVICE_OBJECT DriverObject, PIRP Irp)
 	UNREFERENCED_PARAMETER(DriverObject);
 	
 	PIO_STACK_LOCATION irpsp = IoGetCurrentIrpStackLocation(Irp);
-	const NTSTATUS status = STATUS_SUCCESS;
+	NTSTATUS status = STATUS_SUCCESS;
 	
 	switch (irpsp->MajorFunction)
 	{
@@ -94,9 +135,10 @@ NTSTATUS  StubFunc(PDEVICE_OBJECT DriverObject, PIRP Irp)
 		DbgPrint("Read request!\r\n");
 		break;
 	default:
+		status = STATUS_INVALID_PARAMETER;
 		break;
 	}
-
+	
 
 	Irp->IoStatus.Information = 0;
 	Irp->IoStatus.Status = status;
@@ -109,10 +151,16 @@ NTSTATUS  StubFunc(PDEVICE_OBJECT DriverObject, PIRP Irp)
 _Use_decl_annotations_
 NTSTATUS  WriteWorker(PDEVICE_OBJECT DriverObject, PIRP Irp)
 {
+		
 	UNREFERENCED_PARAMETER(DriverObject);
+
+	if (Irp->RequestorMode == KernelMode)
+	{
+		return STATUS_INVALID_DEVICE_OBJECT_PARAMETER;
+	}
+	
 	PVOID pBuffer = NULL;
 	ULONG ulSize = 0;
-	UNICODE_STRING str = RTL_CONSTANT_STRING(L"Hello, ");
 			
 	PIO_STACK_LOCATION IrpStack = IoGetCurrentIrpStackLocation(Irp);
 	
@@ -121,11 +169,13 @@ NTSTATUS  WriteWorker(PDEVICE_OBJECT DriverObject, PIRP Irp)
 	ulSize = IrpStack->Parameters.Write.Length;
 	pBuffer = Irp->UserBuffer;
 	//DbgBreakPoint();
-		
+
+	
+	
 #if DBG
         DbgPrint("Run TestWrite");
         DbgPrint("ulSize:  %u", ulSize);
-        DbgPrint("pBuffer: %s",str);
+        DbgPrint("Hello, ");
 	    DbgPrint("pBuffer: %s",pBuffer);
 	    DbgPrint("\r\n");
 #endif	
