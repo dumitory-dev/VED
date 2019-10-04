@@ -34,6 +34,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 
 	status = IoCreateSymbolicLink(&SymLinkName, &DeviceName);
 
+	DbgBreakPoint();
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrint("Failed creating Symbolic Link device!");
