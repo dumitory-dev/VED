@@ -1,6 +1,7 @@
+#include "../headers/headers.h"
 #include <wdm.h>
 #include <ntstrsafe.h>
-#include "../headers/headers.h"
+
 
 /*
 INFO BUILD:
@@ -14,7 +15,7 @@ VISUAl STUDIO 2019 COMMUNITY
 
 
 #define DEFAULT_NUMBEROFDEVICES 5
-
+HANDLE DirHandle;
 
 NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType); 
 
@@ -22,6 +23,7 @@ DRIVER_UNLOAD Unload;
 DRIVER_DISPATCH StubFunc;
 DRIVER_DISPATCH WriteWorker;
 DRIVER_DISPATCH CTLWriteRead;
+KSTART_ROUTINE Thread;
 
 NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPath)
 {
@@ -30,7 +32,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	ULONG                 uDevices = DEFAULT_NUMBEROFDEVICES;
 	ULONG                 n;
 	USHORT                uCreatedDevice;
-
+	PDEVICE_OBJECT        pDeviceObject;
 	OBJECT_ATTRIBUTES     ObjectAttributes;
 
 	NTSTATUS status = IoCreateDevice(DriverObject,
@@ -39,7 +41,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		FILE_DEVICE_UNKNOWN,
 		FILE_DEVICE_SECURE_OPEN,
 		FALSE,
-		&DeviceObject
+		&pDeviceObject
 	);
 
 	if (!NT_SUCCESS(status))
@@ -54,7 +56,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrint("Failed creating Symbolic Link device!");
-		IoDeleteDevice(DeviceObject);
+		IoDeleteDevice(pDeviceObject);
 		return status;
 	}
 
@@ -157,7 +159,7 @@ VOID  Unload(struct _DRIVER_OBJECT* DriverObject)
 	UNREFERENCED_PARAMETER(DriverObject);
 
 	IoDeleteSymbolicLink(&SymLinkName);
-	IoDeleteDevice(DeviceObject);
+	//IoDeleteDevice(DeviceObject);
 
 	DbgPrint("Driver Unload!\r\n");
 }
@@ -246,6 +248,11 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 
 	ASSERT(DriverObject != NULL);
 
+	usDeviceName.Buffer = (PWCHAR)ExAllocatePoolWithTag(PagedPool,MAXIMUM_FILENAME_LENGTH * 2, FILE_DISK_POOL_TAG);
+	if (usDeviceName.Buffer == NULL)
+	{
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
 	usDeviceName.Length = 0;
 	usDeviceName.MaximumLength = MAXIMUM_FILENAME_LENGTH * 2;
 	RtlUnicodeStringPrintf(&DeviceName,DEVICE_NAME_PREFIX L"%u", uNumber);
@@ -255,7 +262,7 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 	//Creates a named device
 	NTSTATUS status = IoCreateDeviceSecure(
 		DriverObject,
-		sizeof(pDeviceObject),
+		sizeof(DEVICE_EXTENSION),
 		&usDeviceName,
 		DeviceType,
 		0,
@@ -273,7 +280,7 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 	//The operating system locks the application's buffer in memory.
 	//It then creates a memory descriptor list (MDL) that identifies the locked memory pages, and passes the MDL to the driver stack.
 	//Drivers access the locked pages through the MDL.
-	DeviceObject->Flags |= DO_DIRECT_IO;
+	pDeviceObject->Flags |= DO_DIRECT_IO;
 
 	/*
 	 * For most intermediate and lowest-level drivers, the device extension is the most important data structure associated with a device object. Its internal structure is driver-defined, and it is typically used to:
@@ -282,7 +289,7 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 		Provide storage for any kernel-defined objects or other system resources, such as spin locks, used by the driver.
 		Hold any data the driver must have resident and in system space to carry out its I/O operations.
 	 */
-	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)DeviceObject->DeviceExtension;
+	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
 	pDeviceExtension->media_in_device = FALSE;
 	pDeviceExtension->device_name.Length = usDeviceName.Length;
 	pDeviceExtension->device_name.MaximumLength = usDeviceName.MaximumLength;
@@ -301,7 +308,7 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 	
 	pDeviceExtension->terminate_thread = FALSE;
 
-	PsCreateSystemThread(
+	status = PsCreateSystemThread(
 		&hThread,
 		(ACCESS_MASK)0L,
 		NULL,
@@ -348,4 +355,70 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 	
 	return status;
 		
+}
+
+VOID Thread(IN PVOID pContext)
+{
+	PLIST_ENTRY         pRequest;
+	//PUCHAR              uSystemBuffer;
+    //PUCHAR              uBuffer;
+	//ULONGLONG			i = 0, j = 0;
+
+	//The PAGED_CODE macro ensures that the calling thread is running at an IRQL that is low enough to permit paging.
+	PAGED_CODE();
+
+	ASSERT(pContext != NULL);
+
+	PDEVICE_OBJECT pDeviceObject = (PDEVICE_OBJECT)pContext;
+	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
+	KeSetPriorityThread(KeGetCurrentThread(),LOW_REALTIME_PRIORITY);
+	while (TRUE)
+	{
+
+		KeWaitForSingleObject(
+			&pDeviceExtension->request_event,
+			Executive,
+			KernelMode,
+			FALSE,
+			NULL
+			);
+
+		if (pDeviceExtension->terminate_thread)
+		{
+			PsTerminateSystemThread(STATUS_SUCCESS);
+		}
+
+		while((pRequest = ExInterlockedRemoveHeadList(
+			&pDeviceExtension->list_head,
+			&pDeviceExtension->list_lock)) 
+			!= NULL)
+		{
+			/*The CONTAINING_RECORD macro returns the base address of an instance of a structure
+			 *given the type of the structure and the address of a field within the containing structure.*/
+			PIRP pIrp = CONTAINING_RECORD(pRequest, IRP, Tail.Overlay.ListEntry);
+			PIO_STACK_LOCATION IoStack = IoGetCurrentIrpStackLocation(pIrp);
+
+
+			switch (IoStack->MajorFunction)
+			{
+
+			
+			default:
+				pIrp->IoStatus.Status = STATUS_SUCCESS;
+				
+			}
+
+			IoCompleteRequest(
+				pIrp,
+				(CCHAR)(NT_SUCCESS(pIrp->IoStatus.Status) ?
+					IO_DISK_INCREMENT : IO_NO_INCREMENT
+					)
+			);
+
+			
+		}
+		
+	}
+	
+	
 }
