@@ -1,4 +1,5 @@
 #include <wdm.h>
+#include <ntstrsafe.h>
 #include "../headers/headers.h"
 
 /*
@@ -12,6 +13,11 @@ VISUAl STUDIO 2019 COMMUNITY
 #define DEVICE_REC CTL_CODE(FILE_DEVICE_UNKNOWN,0x802,METHOD_BUFFERED,FILE_READ_DATA)
 
 
+#define DEFAULT_NUMBEROFDEVICES 5
+
+
+NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType); 
+
 DRIVER_UNLOAD Unload;
 DRIVER_DISPATCH StubFunc;
 DRIVER_DISPATCH WriteWorker;
@@ -20,7 +26,12 @@ DRIVER_DISPATCH CTLWriteRead;
 NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPath)
 {
 	UNREFERENCED_PARAMETER(pRegPath);
-	DriverObject->DriverUnload = Unload;
+
+	ULONG                 uDevices = DEFAULT_NUMBEROFDEVICES;
+	ULONG                 n;
+	USHORT                uCreatedDevice;
+
+	OBJECT_ATTRIBUTES     ObjectAttributes;
 
 	NTSTATUS status = IoCreateDevice(DriverObject,
 		0,
@@ -38,14 +49,47 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	}
 
 	status = IoCreateSymbolicLink(&SymLinkName, &DeviceName);
-
-	DbgBreakPoint();
+	   
+	
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrint("Failed creating Symbolic Link device!");
 		IoDeleteDevice(DeviceObject);
 		return status;
 	}
+
+
+	status = ZwCreateDirectoryObject(
+		&DirHandle,
+		DIRECTORY_ALL_ACCESS,
+		&ObjectAttributes);
+
+	if (!NT_SUCCESS(status))
+	{
+		return status;
+	}
+
+	/*
+	 * A temporary object has a name only as long as its handle count is greater than zero. When the handle count reaches zero, the system deletes the object name and appropriately adjusts the object's pointer count.
+	 */
+	ZwMakeTemporaryObject(DirHandle);
+
+	for (n = 0, uCreatedDevice = 0; n < uDevices; n++)
+    {
+        status = CreateDevice(DriverObject, n, FILE_DEVICE_DISK);
+
+        if (NT_SUCCESS(status))
+        {
+            uCreatedDevice++;
+        }
+    }
+	if (uCreatedDevice == 0)
+    {
+        ZwClose(DirHandle);
+        return status;
+    }
+	
+	
 
 	for (int i = 0; i < IRP_MJ_MAXIMUM_FUNCTION; ++i)
 	{ 
@@ -54,6 +98,8 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 
     DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = CTLWriteRead;
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = WriteWorker;
+	DriverObject->DriverUnload = Unload;
+	
 
 	DbgPrint("Success driver installation!\r\n");
 
@@ -79,7 +125,7 @@ NTSTATUS CTLWriteRead(PDEVICE_OBJECT DriverObject, PIRP Irp)
 	PVOID buffer = Irp->AssociatedIrp.SystemBuffer;
 	ULONG inLength = IrpSp->Parameters.DeviceIoControl.InputBufferLength;
 	ULONG OutputLength = IrpSp->Parameters.DeviceIoControl.OutputBufferLength;
-	UCHAR usString[] = "www.code.hut1.ru";
+	WCHAR usString[] = L"Hello, ";
 	
 	switch (IrpSp->Parameters.DeviceIoControl.IoControlCode)
 	{
@@ -148,7 +194,6 @@ NTSTATUS  StubFunc(PDEVICE_OBJECT DriverObject, PIRP Irp)
 	return status;
 }
 
-
 _Use_decl_annotations_
 NTSTATUS  WriteWorker(PDEVICE_OBJECT DriverObject, PIRP Irp)
 {
@@ -187,4 +232,120 @@ NTSTATUS  WriteWorker(PDEVICE_OBJECT DriverObject, PIRP Irp)
 	IoCompleteRequest(Irp,IO_NO_INCREMENT);
 	
 	return status;
+}
+
+
+NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType)
+{
+
+	  
+	UNICODE_STRING      usDeviceName;
+	PDEVICE_OBJECT      pDeviceObject;
+	HANDLE              hThread;
+    UNICODE_STRING      usSSDDL;
+
+	ASSERT(DriverObject != NULL);
+
+	usDeviceName.Length = 0;
+	usDeviceName.MaximumLength = MAXIMUM_FILENAME_LENGTH * 2;
+	RtlUnicodeStringPrintf(&DeviceName,DEVICE_NAME_PREFIX L"%u", uNumber);
+	RtlInitUnicodeString(&usSSDDL, _T("D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)"));
+
+
+	//Creates a named device
+	NTSTATUS status = IoCreateDeviceSecure(
+		DriverObject,
+		sizeof(pDeviceObject),
+		&usDeviceName,
+		DeviceType,
+		0,
+		FALSE,
+		&usSSDDL,
+		NULL,
+		&pDeviceObject
+	);
+	
+	if (!NT_SUCCESS(status))
+	{
+		return status;
+	}
+
+	//The operating system locks the application's buffer in memory.
+	//It then creates a memory descriptor list (MDL) that identifies the locked memory pages, and passes the MDL to the driver stack.
+	//Drivers access the locked pages through the MDL.
+	DeviceObject->Flags |= DO_DIRECT_IO;
+
+	/*
+	 * For most intermediate and lowest-level drivers, the device extension is the most important data structure associated with a device object. Its internal structure is driver-defined, and it is typically used to:
+
+		Maintain device state information.
+		Provide storage for any kernel-defined objects or other system resources, such as spin locks, used by the driver.
+		Hold any data the driver must have resident and in system space to carry out its I/O operations.
+	 */
+	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)DeviceObject->DeviceExtension;
+	pDeviceExtension->media_in_device = FALSE;
+	pDeviceExtension->device_name.Length = usDeviceName.Length;
+	pDeviceExtension->device_name.MaximumLength = usDeviceName.MaximumLength;
+	pDeviceExtension->device_name.Buffer = usDeviceName.Buffer;
+	pDeviceExtension->device_number = uNumber;
+	pDeviceExtension->device_type = DeviceType;
+
+
+	InitializeListHead(&pDeviceExtension->list_head);
+	KeInitializeSpinLock(&pDeviceExtension->list_lock);
+
+	KeInitializeEvent(
+		&pDeviceExtension->request_event,
+		SynchronizationEvent,
+		FALSE);
+	
+	pDeviceExtension->terminate_thread = FALSE;
+
+	PsCreateSystemThread(
+		&hThread,
+		(ACCESS_MASK)0L,
+		NULL,
+		NULL,
+		NULL,
+		Thread,
+		DeviceObject
+	);
+
+	if (!NT_SUCCESS(status))
+	{
+		IoDeleteDevice(DeviceObject);
+		ExFreePool(usDeviceName.Buffer);
+		return status;
+	}
+
+	/*The ObReferenceObjectByHandle routine provides access validation on the object handle, and, if access can be granted, returns the corresponding pointer to the object's body.*/
+
+	status = ObReferenceObjectByHandle(
+		hThread,
+		THREAD_ALL_ACCESS,
+		NULL,
+		KernelMode,
+		&pDeviceExtension->thread_pointer,
+		NULL
+	);
+
+	if (!NT_SUCCESS(status))
+	{
+		ZwClose(hThread);
+		pDeviceExtension->terminate_thread = TRUE;
+		KeSetEvent(
+			&pDeviceExtension->request_event,
+			(KPRIORITY)0,
+			FALSE
+		);
+		IoDeleteDevice(DeviceObject);
+		ExFreePool(usDeviceName.Buffer);
+		return status;
+		
+	}
+
+	ZwClose(hThread);
+	
+	return status;
+		
 }
