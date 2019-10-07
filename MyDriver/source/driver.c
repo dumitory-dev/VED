@@ -17,12 +17,12 @@ VISUAl STUDIO 2019 COMMUNITY
 #define DEFAULT_NUMBEROFDEVICES 5
 HANDLE DirHandle;
 
-NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType); 
+NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType);
+PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject);
 
 DRIVER_UNLOAD Unload;
-DRIVER_DISPATCH StubFunc;
-DRIVER_DISPATCH WriteWorker;
-DRIVER_DISPATCH CTLWriteRead;
+//DRIVER_DISPATCH StubFunc;
+DRIVER_DISPATCH CreateAndCloseDevice;
 KSTART_ROUTINE Thread;
 
 NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPath)
@@ -93,13 +93,12 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	
 	
 
-	for (int i = 0; i < IRP_MJ_MAXIMUM_FUNCTION; ++i)
+	/*for (int i = 0; i < IRP_MJ_MAXIMUM_FUNCTION; ++i)
 	{ 
 		DriverObject->MajorFunction[i] = StubFunc;
-	}
+	}*/
 
-    DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = CTLWriteRead;
-	DriverObject->MajorFunction[IRP_MJ_WRITE] = WriteWorker;
+   
 	DriverObject->DriverUnload = Unload;
 	
 
@@ -115,126 +114,75 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
    For more information about the requirements for function declarations, see Declaring Functions by Using Function Role Types for WDM Drivers.
    For information about _Use_decl_annotations_, see Annotating Function Behavior.
 */
-
 _Use_decl_annotations_
-NTSTATUS CTLWriteRead(PDEVICE_OBJECT DriverObject, PIRP Irp)
+VOID Unload(IN PDRIVER_OBJECT pDriverObject)
 {
-	UNREFERENCED_PARAMETER(DriverObject);
-	
-	PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(Irp);
-	NTSTATUS status = STATUS_SUCCESS;
-	ULONG returnLength = 0;
-	PVOID buffer = Irp->AssociatedIrp.SystemBuffer;
-	ULONG inLength = IrpSp->Parameters.DeviceIoControl.InputBufferLength;
-	ULONG OutputLength = IrpSp->Parameters.DeviceIoControl.OutputBufferLength;
-	WCHAR usString[] = L"Hello, ";
-	
-	switch (IrpSp->Parameters.DeviceIoControl.IoControlCode)
+	PAGED_CODE();
+	PDEVICE_OBJECT pDeviceObject = pDriverObject->DeviceObject;
+
+	while (pDeviceObject)
 	{
-	case DEVICE_SEND:
-		DbgPrint("Send data is %ws \r\n",(WCHAR*)buffer);
-		returnLength = inLength;
-		break;
-	case DEVICE_REC:
-		RtlCopyMemory(Irp->AssociatedIrp.SystemBuffer,&usString,OutputLength);
-		DbgPrint("Send data is %s \r\n",usString);
-		returnLength = sizeof(usString);
-		break;
-	default:
-		status = STATUS_INVALID_PARAMETER;
-		break;
+		pDeviceObject = DeleteDevice(pDeviceObject);
+	}
+
+	ZwClose(DirHandle);
+	
+}
+
+PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
+{
+	PAGED_CODE();
+	ASSERT(pDeviceObject != NULL);
+
+	PDEVICE_EXTENSION pDeviceExtension = pDeviceObject->DeviceExtension;
+	pDeviceExtension->terminate_thread = TRUE;
+	
+	KeSetEvent(
+		&pDeviceExtension->request_event,
+		(KPRIORITY)0,
+		FALSE
+	);
+
+	KeWaitForSingleObject(
+		pDeviceExtension->thread_pointer,
+		Executive,
+		KernelMode,
+		FALSE,
+		NULL
+		);
+	
+	ObDereferenceObject(pDeviceExtension->thread_pointer);
+	if (pDeviceExtension->device_name.Buffer != NULL)
+	{
+
+		ExFreePool(pDeviceExtension->device_name.Buffer);
 		
 	}
-	Irp->IoStatus.Status = status;
-	Irp->IoStatus.Information = returnLength;
-	IoCompleteRequest(Irp,IO_NO_INCREMENT);
 
-	return status;
+	/*
+	 * A pointer to the next device object, if any, that was created by the same driver.
+	 * The I/O manager updates this list at each successful call to IoCreateDevice or IoCreateDeviceSecure.
+	 */
+	PDEVICE_OBJECT pNextDevice = pDeviceObject->NextDevice;
+
+	IoDeleteDevice(pNextDevice);
+	
+	return pNextDevice;
+	
 }
 
 _Use_decl_annotations_
-VOID  Unload(struct _DRIVER_OBJECT* DriverObject)
+NTSTATUS CreateAndCloseDevice(struct _DEVICE_OBJECT * pDeviceObject, struct _IRP *pIrp)
 {
+	UNREFERENCED_PARAMETER(pDeviceObject);
+	pIrp->IoStatus.Status = STATUS_SUCCESS;
+	pIrp->IoStatus.Information = FILE_OPENED;
 
-	UNREFERENCED_PARAMETER(DriverObject);
-
-	IoDeleteSymbolicLink(&SymLinkName);
-	//IoDeleteDevice(DeviceObject);
-
-	DbgPrint("Driver Unload!\r\n");
+	IoCompleteRequest(pIrp,IO_NO_INCREMENT);
+	
+	return STATUS_SUCCESS;
 }
 
-_Use_decl_annotations_
-NTSTATUS  StubFunc(PDEVICE_OBJECT DriverObject, PIRP Irp)
-{
-	UNREFERENCED_PARAMETER(DriverObject);
-	
-	PIO_STACK_LOCATION irpsp = IoGetCurrentIrpStackLocation(Irp);
-	NTSTATUS status = STATUS_SUCCESS;
-	
-	switch (irpsp->MajorFunction)
-	{
-	case  IRP_MJ_CREATE:
-		DbgPrint("Create request!\r\n");
-		break;
-	case IRP_MJ_CLOSE:
-		DbgPrint("Close request!\r\n");
-		break;
-	case  IRP_MJ_READ:
-		DbgPrint("Read request!\r\n");
-		break;
-	default:
-		status = STATUS_INVALID_PARAMETER;
-		break;
-	}
-	
-
-	Irp->IoStatus.Information = 0;
-	Irp->IoStatus.Status = status;
-	IoCompleteRequest(Irp,IO_NO_INCREMENT);
-	
-	return status;
-}
-
-_Use_decl_annotations_
-NTSTATUS  WriteWorker(PDEVICE_OBJECT DriverObject, PIRP Irp)
-{
-		
-	UNREFERENCED_PARAMETER(DriverObject);
-
-	if (Irp->RequestorMode == KernelMode)
-	{
-		return STATUS_INVALID_DEVICE_OBJECT_PARAMETER;
-	}
-	
-	PVOID pBuffer = NULL;
-	ULONG ulSize = 0;
-			
-	PIO_STACK_LOCATION IrpStack = IoGetCurrentIrpStackLocation(Irp);
-	
-	const NTSTATUS status = STATUS_SUCCESS;
-
-	ulSize = IrpStack->Parameters.Write.Length;
-	pBuffer = Irp->UserBuffer;
-	//DbgBreakPoint();
-
-	
-	
-#if DBG
-        DbgPrint("Run TestWrite");
-        DbgPrint("ulSize:  %u", ulSize);
-        DbgPrint("Hello, ");
-	    DbgPrint("pBuffer: %s",pBuffer);
-	    DbgPrint("\r\n");
-#endif	
-	
-	
-	Irp->IoStatus.Information = ulSize;
-	Irp->IoStatus.Status = status;
-	IoCompleteRequest(Irp,IO_NO_INCREMENT);
-	
-	return status;
-}
 
 
 NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType)
