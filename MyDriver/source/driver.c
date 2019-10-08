@@ -17,51 +17,38 @@ VISUAl STUDIO 2019 COMMUNITY
 #define DEFAULT_NUMBEROFDEVICES 5
 HANDLE DirHandle;
 
-NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType);
+NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType);
 PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject);
 
 DRIVER_UNLOAD Unload;
 //DRIVER_DISPATCH StubFunc;
 DRIVER_DISPATCH CreateAndCloseDevice;
+DRIVER_DISPATCH ReadAndWriteDevice;
+DRIVER_DISPATCH ControlDevice;
 KSTART_ROUTINE Thread;
 
 NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPath)
 {
 	UNREFERENCED_PARAMETER(pRegPath);
 
-	ULONG                 uDevices = DEFAULT_NUMBEROFDEVICES;
+	const ULONG           uDevices = DEFAULT_NUMBEROFDEVICES;
 	ULONG                 n;
 	USHORT                uCreatedDevice;
-	PDEVICE_OBJECT        pDeviceObject;
+	UNICODE_STRING        unDeviceDirName;
 	OBJECT_ATTRIBUTES     ObjectAttributes;
 
-	NTSTATUS status = IoCreateDevice(DriverObject,
-		0,
-		&DeviceName,
-		FILE_DEVICE_UNKNOWN,
-		FILE_DEVICE_SECURE_OPEN,
-		FALSE,
-		&pDeviceObject
+	RtlInitUnicodeString(&unDeviceDirName, DEVICE_DIR_NAME);
+
+	InitializeObjectAttributes(
+		&ObjectAttributes,
+		&unDeviceDirName,
+		OBJ_PERMANENT,
+		NULL,
+		NULL
 	);
 
-	if (!NT_SUCCESS(status))
-	{
-		DbgPrint("Failed creating device!");
-		return status;
-	}
 
-	status = IoCreateSymbolicLink(&SymLinkName, &DeviceName);
-	   
-	
-	if (!NT_SUCCESS(status))
-	{
-		DbgPrint("Failed creating Symbolic Link device!");
-		IoDeleteDevice(pDeviceObject);
-		return status;
-	}
-
-
-	status = ZwCreateDirectoryObject(
+	NTSTATUS status = ZwCreateDirectoryObject(
 		&DirHandle,
 		DIRECTORY_ALL_ACCESS,
 		&ObjectAttributes);
@@ -75,36 +62,123 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	 * A temporary object has a name only as long as its handle count is greater than zero. When the handle count reaches zero, the system deletes the object name and appropriately adjusts the object's pointer count.
 	 */
 	ZwMakeTemporaryObject(DirHandle);
-
+	DbgBreakPoint();
 	for (n = 0, uCreatedDevice = 0; n < uDevices; n++)
-    {
-        status = CreateDevice(DriverObject, n, FILE_DEVICE_DISK);
+	{
+		status = CreateDevice(DriverObject, n, FILE_DEVICE_DISK);
 
-        if (NT_SUCCESS(status))
-        {
-            uCreatedDevice++;
-        }
-    }
+		if (NT_SUCCESS(status))
+		{
+			uCreatedDevice++;
+		}
+	}
 	if (uCreatedDevice == 0)
-    {
-        ZwClose(DirHandle);
-        return status;
-    }
-	
-	
+	{
+		ZwClose(DirHandle);
+		return status;
+	}
+
+
 
 	/*for (int i = 0; i < IRP_MJ_MAXIMUM_FUNCTION; ++i)
-	{ 
+	{
 		DriverObject->MajorFunction[i] = StubFunc;
 	}*/
 
-   
+	DriverObject->MajorFunction[IRP_MJ_CREATE] = CreateAndCloseDevice;
+	DriverObject->MajorFunction[IRP_MJ_CLOSE] = CreateAndCloseDevice;
+	DriverObject->MajorFunction[IRP_MJ_WRITE] = ReadAndWriteDevice;
+	DriverObject->MajorFunction[IRP_MJ_READ] = ReadAndWriteDevice;
+	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = ControlDevice;
 	DriverObject->DriverUnload = Unload;
-	
 
 	DbgPrint("Success driver installation!\r\n");
 
 	return status;
+}
+
+_Use_decl_annotations_
+NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
+{
+
+	PDEVICE_EXTENSION  pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
+	PIO_STACK_LOCATION IoStack = IoGetCurrentIrpStackLocation(pIrp);
+	NTSTATUS status = STATUS_SUCCESS;
+	if (!pDeviceExtension->media_in_device
+		&&
+		IoStack->Parameters.DeviceIoControl.IoControlCode != IOCTL_FILE_DISK_OPEN_FILE
+		)
+	{
+		pIrp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
+		pIrp->IoStatus.Information = 0;
+		IoCompleteRequest(pIrp, IO_NO_INCREMENT);
+		return STATUS_NO_MEDIA_IN_DEVICE;
+	}
+
+	switch (IoStack->Parameters.DeviceIoControl.IoControlCode)
+	{
+
+		case IOCTL_FILE_DISK_OPEN_FILE:
+		{
+			if (pDeviceExtension->media_in_device)
+			{
+				status = STATUS_INVALID_DEVICE_REQUEST;
+				pIrp->IoStatus.Information = 0;
+				break;
+			}
+
+			if (IoStack->Parameters.DeviceIoControl.InputBufferLength
+				<
+				sizeof(OPEN_FILE_INFORMATION)
+				+
+				((POPEN_FILE_INFORMATION)pIrp->AssociatedIrp.SystemBuffer)->FileNameLength * sizeof(WCHAR)
+				-
+				sizeof(WCHAR))
+			{
+				status = STATUS_INVALID_PARAMETER;
+				pIrp->IoStatus.Information = 0;
+				break;
+			}
+
+			IoMarkIrpPending(pIrp);
+
+			ExInterlockedInsertTailList(
+				&pDeviceExtension->list_head,
+				&pIrp->Tail.Overlay.ListEntry,
+				&pDeviceExtension->list_lock
+			);
+
+			KeSetEvent(
+				&pDeviceExtension->request_event,
+				(KPRIORITY)0,
+				FALSE
+			);
+
+			status = STATUS_PENDING;
+
+		}
+		default:
+        {
+            KdPrint((
+                "FileDisk: Unknown IoControlCode %#x\n",
+                IoStack->Parameters.DeviceIoControl.IoControlCode
+                ));
+
+            status = STATUS_INVALID_DEVICE_REQUEST;
+            pIrp->IoStatus.Information = 0;
+        }
+
+	}
+
+	if (status != STATUS_PENDING)
+    {
+        pIrp->IoStatus.Status = status;
+
+        IoCompleteRequest(pIrp, IO_NO_INCREMENT);
+    }
+
+    return status;
+
 }
 
 /*
@@ -126,7 +200,11 @@ VOID Unload(IN PDRIVER_OBJECT pDriverObject)
 	}
 
 	ZwClose(DirHandle);
-	
+#ifdef DBG
+	DbgPrint("Unload success!\r\n");
+#endif
+
+
 }
 
 PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
@@ -136,7 +214,7 @@ PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
 
 	PDEVICE_EXTENSION pDeviceExtension = pDeviceObject->DeviceExtension;
 	pDeviceExtension->terminate_thread = TRUE;
-	
+
 	KeSetEvent(
 		&pDeviceExtension->request_event,
 		(KPRIORITY)0,
@@ -149,14 +227,14 @@ PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
 		KernelMode,
 		FALSE,
 		NULL
-		);
-	
+	);
+
 	ObDereferenceObject(pDeviceExtension->thread_pointer);
 	if (pDeviceExtension->device_name.Buffer != NULL)
 	{
 
 		ExFreePool(pDeviceExtension->device_name.Buffer);
-		
+
 	}
 
 	/*
@@ -165,45 +243,89 @@ PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
 	 */
 	PDEVICE_OBJECT pNextDevice = pDeviceObject->NextDevice;
 
-	IoDeleteDevice(pNextDevice);
-	
+	IoDeleteDevice(pDeviceObject);
+
 	return pNextDevice;
-	
+
 }
 
 _Use_decl_annotations_
-NTSTATUS CreateAndCloseDevice(struct _DEVICE_OBJECT * pDeviceObject, struct _IRP *pIrp)
+NTSTATUS CreateAndCloseDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 {
 	UNREFERENCED_PARAMETER(pDeviceObject);
 	pIrp->IoStatus.Status = STATUS_SUCCESS;
 	pIrp->IoStatus.Information = FILE_OPENED;
 
-	IoCompleteRequest(pIrp,IO_NO_INCREMENT);
-	
+	IoCompleteRequest(pIrp, IO_NO_INCREMENT);
+
 	return STATUS_SUCCESS;
 }
 
+_Use_decl_annotations_
+NTSTATUS ReadAndWriteDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
+{
+	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
+	if (!pDeviceExtension->media_in_device)
+	{
+		pIrp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
+		pIrp->IoStatus.Information = 0;
+
+		IoCompleteRequest(pIrp, IO_NO_INCREMENT);
+
+		return STATUS_NO_MEDIA_IN_DEVICE;
+
+	}
+
+	PIO_STACK_LOCATION IoStack = IoGetCurrentIrpStackLocation(pIrp);
+	if (IoStack->Parameters.Read.Length == 0)
+	{
+		pIrp->IoStatus.Status = STATUS_SUCCESS;
+		pIrp->IoStatus.Information = 0;
+
+		IoCompleteRequest(pIrp, IO_NO_INCREMENT);
+
+		return STATUS_SUCCESS;
+	}
 
 
-NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType)
+	IoMarkIrpPending(pIrp);
+
+	ExInterlockedInsertTailList(
+		&pDeviceExtension->list_head,
+		&pIrp->Tail.Overlay.ListEntry,
+		&pDeviceExtension->list_lock
+	);
+
+
+	KeSetEvent(
+		&pDeviceExtension->request_event,
+		(KPRIORITY)0,
+		FALSE
+	);
+
+	return STATUS_PENDING;
+
+}
+
+NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType)
 {
 
-	  
+
 	UNICODE_STRING      usDeviceName;
 	PDEVICE_OBJECT      pDeviceObject;
 	HANDLE              hThread;
-    UNICODE_STRING      usSSDDL;
+	UNICODE_STRING      usSSDDL;
 
 	ASSERT(DriverObject != NULL);
 
-	usDeviceName.Buffer = (PWCHAR)ExAllocatePoolWithTag(PagedPool,MAXIMUM_FILENAME_LENGTH * 2, FILE_DISK_POOL_TAG);
+	usDeviceName.Buffer = (PWCHAR)ExAllocatePoolWithTag(PagedPool, MAXIMUM_FILENAME_LENGTH * 2, FILE_DISK_POOL_TAG);
 	if (usDeviceName.Buffer == NULL)
 	{
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	usDeviceName.Length = 0;
 	usDeviceName.MaximumLength = MAXIMUM_FILENAME_LENGTH * 2;
-	RtlUnicodeStringPrintf(&DeviceName,DEVICE_NAME_PREFIX L"%u", uNumber);
+	RtlUnicodeStringPrintf(&usDeviceName, DEVICE_NAME_PREFIX L"%u", uNumber);
 	RtlInitUnicodeString(&usSSDDL, _T("D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)"));
 
 
@@ -219,7 +341,7 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 		NULL,
 		&pDeviceObject
 	);
-	
+
 	if (!NT_SUCCESS(status))
 	{
 		return status;
@@ -253,7 +375,7 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 		&pDeviceExtension->request_event,
 		SynchronizationEvent,
 		FALSE);
-	
+
 	pDeviceExtension->terminate_thread = FALSE;
 
 	status = PsCreateSystemThread(
@@ -263,12 +385,12 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 		NULL,
 		NULL,
 		Thread,
-		DeviceObject
+		pDeviceObject
 	);
 
 	if (!NT_SUCCESS(status))
 	{
-		IoDeleteDevice(DeviceObject);
+		IoDeleteDevice(pDeviceObject);
 		ExFreePool(usDeviceName.Buffer);
 		return status;
 	}
@@ -293,23 +415,23 @@ NTSTATUS CreateDevice( struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVIC
 			(KPRIORITY)0,
 			FALSE
 		);
-		IoDeleteDevice(DeviceObject);
+		IoDeleteDevice(pDeviceObject);
 		ExFreePool(usDeviceName.Buffer);
 		return status;
-		
+
 	}
 
 	ZwClose(hThread);
-	
+
 	return status;
-		
+
 }
 
 VOID Thread(IN PVOID pContext)
 {
 	PLIST_ENTRY         pRequest;
 	//PUCHAR              uSystemBuffer;
-    //PUCHAR              uBuffer;
+	//PUCHAR              uBuffer;
 	//ULONGLONG			i = 0, j = 0;
 
 	//The PAGED_CODE macro ensures that the calling thread is running at an IRQL that is low enough to permit paging.
@@ -319,7 +441,7 @@ VOID Thread(IN PVOID pContext)
 
 	PDEVICE_OBJECT pDeviceObject = (PDEVICE_OBJECT)pContext;
 	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
-	KeSetPriorityThread(KeGetCurrentThread(),LOW_REALTIME_PRIORITY);
+	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY);
 	while (TRUE)
 	{
 
@@ -329,16 +451,16 @@ VOID Thread(IN PVOID pContext)
 			KernelMode,
 			FALSE,
 			NULL
-			);
+		);
 
 		if (pDeviceExtension->terminate_thread)
 		{
 			PsTerminateSystemThread(STATUS_SUCCESS);
 		}
 
-		while((pRequest = ExInterlockedRemoveHeadList(
+		while ((pRequest = ExInterlockedRemoveHeadList(
 			&pDeviceExtension->list_head,
-			&pDeviceExtension->list_lock)) 
+			&pDeviceExtension->list_lock))
 			!= NULL)
 		{
 			/*The CONTAINING_RECORD macro returns the base address of an instance of a structure
@@ -350,10 +472,10 @@ VOID Thread(IN PVOID pContext)
 			switch (IoStack->MajorFunction)
 			{
 
-			
+
 			default:
 				pIrp->IoStatus.Status = STATUS_SUCCESS;
-				
+
 			}
 
 			IoCompleteRequest(
@@ -363,10 +485,10 @@ VOID Thread(IN PVOID pContext)
 					)
 			);
 
-			
+
 		}
-		
+
 	}
-	
-	
+
+
 }
