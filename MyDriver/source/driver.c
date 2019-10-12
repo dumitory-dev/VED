@@ -128,7 +128,7 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 	case IOCTL_FILE_ADD_DEVICE:
 	{
 		PAGED_CODE();
-		DbgBreakPoint();
+		//DbgBreakPoint();
 		status = CreateDevice(
 			g_pDriverObject,
 			g_uCountDevice,
@@ -1011,7 +1011,7 @@ VOID Thread(IN PVOID pContext)
 				{
 
 				case IOCTL_FILE_DISK_OPEN_FILE:
-					DbgBreakPoint();
+					//DbgBreakPoint();
 					pIrp->IoStatus.Status = OpenFile(pDeviceObject, pIrp);
 					break;
 

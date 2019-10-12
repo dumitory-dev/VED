@@ -155,15 +155,55 @@ int mount(POPEN_FILE_INFORMATION open_file,size_t number_device)
 }
 
 
+void AddDevice()
+{
+	    ved::file::settings settings{};
+
+		settings.dw_creation_disposition = OPEN_EXISTING;
+		settings.dw_desired_access =  GENERIC_READ | GENERIC_WRITE;
+		settings.dw_flags_and_attributes = FILE_FLAG_NO_BUFFERING;
+		settings.ws_file_name = L"\\\\.\\TestLink";
+		
+		const auto ptr = ved::file::create(settings);
+		std::cout<<"Ok - device open\nSend ioctl code...\n"<<std::endl;
+
+		DWORD ret = 0;
+		auto res = DeviceIoControl(
+        ptr->operator void*(), // Handle драйвера из функции CreateFile
+         IOCTL_FILE_ADD_DEVICE, // Комманда
+        (LPVOID)0,
+        (DWORD)0,
+        (LPVOID)NULL,
+        (DWORD)0,
+        (LPDWORD)&ret,
+        NULL
+        );
+
+		if (res)
+		{
+			std::cout<<"Ok! Number device - "<<ret<<std::endl;
+		}
+		
+}
+
 
 int main(void)
 {
 	try
 	{
+		size_t choose = 0;
+		std::cin>>choose;
+
+		if (choose)
+		{
+			std::cin.ignore();
+		std::cin.clear();
+		
 		std::cout<<"Type file name:"<<std::endl;
 		    
 		std::wstring file_name;
 		std::getline(std::wcin,file_name);
+		std::wcout<<file_name<<std::endl;
 		std::cout<<"Type file password:"<<std::endl;
 		std::string password(16,'0');
 		std::getline(std::cin,password);
@@ -185,7 +225,11 @@ int main(void)
 			number
 		);
 		
-		
+		}
+		else
+		{
+			AddDevice();
+		}
 		//std::cout<<std::endl;
 		//const std::string buffer = "Test";
 		//const std::vector<BYTE> buffer_bytes(buffer.cbegin(), buffer.cend());
