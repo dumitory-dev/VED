@@ -61,8 +61,7 @@
     <DriverType>WDM</DriverType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <TargetVersion>
-    </TargetVersion>
+    <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
     <ConfigurationType>Driver</ConfigurationType>
@@ -157,7 +156,14 @@
     <ClCompile Include="..\source\driver.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\headers\codeioctl.h" />
+    <ClInclude Include="..\headers\constants.h" />
     <ClInclude Include="..\headers\headers.h" />
+    <ClInclude Include="..\headers\libraries.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\headers\globalvariable.h" />
+    <Text Include="..\headers\structs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

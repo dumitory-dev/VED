@@ -1,7 +1,4 @@
 #include "../headers/headers.h"
-#include <wdm.h>
-#include <ntstrsafe.h>
-
 
 /*
 INFO BUILD:
@@ -10,18 +7,9 @@ SDK VERSION: 10.0.18362.0
 VISUAl STUDIO 2019 COMMUNITY
 */
 
-#define DEVICE_SEND CTL_CODE(FILE_DEVICE_UNKNOWN,0x801,METHOD_BUFFERED,FILE_WRITE_DATA)
-#define DEVICE_REC CTL_CODE(FILE_DEVICE_UNKNOWN,0x802,METHOD_BUFFERED,FILE_READ_DATA)
-
-
-#define DEFAULT_NUMBEROFDEVICES 5
-ULONG g_uCountDevice = 0;
-HANDLE DirHandle = NULL;
-PDEVICE_OBJECT g_pDeviceObject = NULL;
-PDRIVER_OBJECT g_pDriverObject = NULL;
-
 NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType);
 PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject);
+
 NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp);
 NTSTATUS CloseFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp);
 
@@ -36,14 +24,16 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 {
 	UNREFERENCED_PARAMETER(pRegPath);
 
-	//const ULONG           uDevices = DEFAULT_NUMBEROFDEVICES;
-	//ULONG                 n;
-	//USHORT                uCreatedDevice;
 	UNICODE_STRING        unDeviceDirName;
 	OBJECT_ATTRIBUTES     ObjectAttributes;
 
 	RtlInitUnicodeString(&unDeviceDirName, DEVICE_DIR_NAME);
+	
+#ifdef  DBG
 	DbgBreakPoint();
+#endif
+	
+	
 	InitializeObjectAttributes(
 		&ObjectAttributes,
 		&unDeviceDirName,
@@ -52,7 +42,6 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		NULL
 	);
 
-	
 	NTSTATUS status  = IoCreateDevice(
 		DriverObject,
 		0,
@@ -65,7 +54,6 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 
 	if (!NT_SUCCESS(status))
 	{
-		
 		DbgPrint("VED: Failed create device!\n\r");
 		return status;
 	}
@@ -75,18 +63,16 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	   	
 	if (!NT_SUCCESS(status))
 	{
-		DbgPrint("Failed creating Symbolic Link device!");
+		DbgPrint("VED: Failed creating Symbolic Link device!");
 		IoDeleteDevice(g_pDeviceObject);
 		return status;
 	}
 	
-
     status = ZwCreateDirectoryObject(
-		&DirHandle,
+		&g_pDirHandle,
 		DIRECTORY_ALL_ACCESS,
 		&ObjectAttributes);
-
-
+	
 	if (!NT_SUCCESS(status))
 	{
 		return status;
@@ -96,29 +82,9 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	 * A temporary object has a name only as long as its handle count is greater than zero.
 	 * When the handle count reaches zero, the system deletes the object name and appropriately adjusts the object's pointer count.
 	 */
-	ZwMakeTemporaryObject(DirHandle);
-	
+	ZwMakeTemporaryObject(g_pDirHandle);
 		
-	
-	/*status = CreateDevice(DriverObject, g_uCountDevice, FILE_DEVICE_DISK);
-	if (!NT_SUCCESS(status))
-	{
-		ZwClose(DirHandle);
-		return status;
-	}
-
-	g_uCountDevice++;
-	status = CreateDevice(DriverObject, g_uCountDevice, FILE_DEVICE_DISK);
-	if (!NT_SUCCESS(status))
-	{
-		ZwClose(DirHandle);
-		return status;
-	}
-
-	g_uCountDevice++;
-*/
-	
-		
+			
 	DriverObject->DriverUnload = Unload;
 	DriverObject->MajorFunction[IRP_MJ_CREATE] = CreateAndCloseDevice;
 	DriverObject->MajorFunction[IRP_MJ_CLOSE] = CreateAndCloseDevice;
@@ -132,7 +98,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		DriverObject->MajorFunction[i] = StubFunc;
 	}*/
 
-	DbgPrint("Success driver installation!\r\n");
+	DbgPrint("VED: Success driver installation!\r\n");
 	return status;
 }
 
@@ -178,6 +144,38 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		g_uCountDevice++;
 		DbgPrint("VED: Device is load!\n\r");
 		break;
+	}
+	case IOCTL_GET_FREE_DEVICE:
+	{
+		PAGED_CODE();
+
+		if (g_pDriverObject->DeviceObject != NULL && g_pDriverObject->DeviceObject->NextDevice != NULL)
+		{
+
+			
+			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject;
+
+			ULONG index = 0 ;
+			
+			while (pDeviceObject_ != g_pDeviceObject)
+			{
+				if (!((PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension)->media_in_device)
+				{
+					pIrp->IoStatus.Status = STATUS_SUCCESS;
+					pIrp->IoStatus.Information = index;
+					break;
+				}
+				pDeviceObject_ = pDeviceObject->NextDevice;
+				++index;
+								 
+			};
+						
+		}	
+
+		status = STATUS_THREAD_NOT_IN_SESSION;
+		pIrp->IoStatus.Information = 0;
+		break;
+					
 	}
 	case IOCTL_FILE_DISK_OPEN_FILE:
 	{
@@ -610,7 +608,7 @@ VOID Unload(IN PDRIVER_OBJECT pDriverObject)
 		}
 	}
 
-	ZwClose(DirHandle);
+	ZwClose(g_pDirHandle);
 
 #ifdef DBG
 	DbgPrint("Unload success!\r\n");
@@ -719,29 +717,27 @@ NTSTATUS ReadAndWriteDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* p
 
 NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType)
 {
-
-
-	UNICODE_STRING      usDeviceName;
-	PDEVICE_OBJECT      pDeviceObject;
-	HANDLE              hThread;
-	UNICODE_STRING      usSSDDL;
-
+	
 	ASSERT(DriverObject != NULL);
-
+	UNICODE_STRING     usDeviceName;
+	
 	usDeviceName.Buffer = (PWCHAR)ExAllocatePoolWithTag(PagedPool, MAXIMUM_FILENAME_LENGTH * 2, FILE_DISK_POOL_TAG);
 	if (usDeviceName.Buffer == NULL)
 	{
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-
+		
 	usDeviceName.Length = 0;
 	usDeviceName.MaximumLength = MAXIMUM_FILENAME_LENGTH * 2;
 	RtlUnicodeStringPrintf(&usDeviceName, DEVICE_DIR_NAME L"%u", uNumber);
+	
+	UNICODE_STRING    usSSDDL;
 	RtlInitUnicodeString(&usSSDDL, _T("D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)"));
 
 	//DbgBreakPoint();
 
 	//Creates a named device
+	PDEVICE_OBJECT      pDeviceObject = NULL;
 	NTSTATUS status = IoCreateDeviceSecure(
 		DriverObject,
 		sizeof(DEVICE_EXTENSION),
@@ -811,6 +807,7 @@ NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE
 
 	pDeviceExtension->terminate_thread = FALSE;
 
+	HANDLE hThread = NULL;
 	status = PsCreateSystemThread(
 		&hThread,
 		(ACCESS_MASK)0L,

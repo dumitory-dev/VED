@@ -1,21 +1,8 @@
 ﻿#include "stdafx.h"
+#define USERMODE
 #include "classes/file/File.h"
 #include <Windows.h>
 #include <Shlobj.h>
-#define DEVICE_REC CTL_CODE(FILE_DEVICE_UNKNOWN,0x802,METHOD_BUFFERED,FILE_READ_DATA)
-
-#define DEVICE_SEND CTL_CODE(FILE_DEVICE_UNKNOWN,0x801,METHOD_BUFFERED,FILE_WRITE_DATA)
-#define MAX_PATH 255
-typedef struct _OPEN_FILE_INFORMATION {
-	LARGE_INTEGER	FileSize;
-	UCHAR			DriveLetter;
-	USHORT			FileNameLength;
-	USHORT			PasswordLength;
-	CHAR			Password[16];
-	WCHAR			FileName[1];
-}OPEN_FILE_INFORMATION, *POPEN_FILE_INFORMATION;
-
-#define FILE_DISK_POOL_TAG 'ksiD'
 #ifndef __T
 #ifdef _NTDDK_
 #define __T(x) L ## x
@@ -28,39 +15,61 @@ typedef struct _OPEN_FILE_INFORMATION {
 #endif)
 #define DEVICE_BASE_NAME	_T("\\FileDisk")
 #define DEVICE_DIR_NAME		_T("\\Device")	DEVICE_BASE_NAME
-#define DEVICE_NAME_PREFIX	DEVICE_DIR_NAME	
+#define DEVICE_NAME_PREFIX	DEVICE_DIR_NAME	DEVICE_BASE_NAME
+typedef struct _OPEN_FILE_INFORMATION {
+	LARGE_INTEGER	FileSize;
+	UCHAR			DriveLetter;
+	USHORT			FileNameLength;
+	USHORT			PasswordLength;
+	CHAR			Password[16];
+	WCHAR			FileName[1];
+}OPEN_FILE_INFORMATION, *POPEN_FILE_INFORMATION;
 
 #define IOCTL_FILE_DISK_OPEN_FILE	CTL_CODE(FILE_DEVICE_DISK, 0x800, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)
 #define IOCTL_FILE_DISK_CLOSE_FILE	CTL_CODE(FILE_DEVICE_DISK, 0x801, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)
+#define IOCTL_FILE_ADD_DEVICE CTL_CODE(FILE_DEVICE_DISK, 0x802, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)
+#define IOCTL_GET_FREE_DEVICE CTL_CODE(FILE_DEVICE_DISK, 0x803, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)
 
-int mount()
+
+POPEN_FILE_INFORMATION create_file_info(const std::wstring & file_name, size_t file_size, char drive_letter, const std::string & file_password )
 {
+	if (file_name.empty() 
+		||
+		!file_size
+		||
+		file_password.length() != 16
+		)
+	{
+		throw std::invalid_argument("Failed create_file_info! Invalid arguments!");
+	}
 	
-
-	std::wstring name = L"c:\\cdimage19.img";
-	POPEN_FILE_INFORMATION open_file =  static_cast<POPEN_FILE_INFORMATION>(malloc(sizeof(OPEN_FILE_INFORMATION) + name.length() * sizeof(WCHAR) + 7));
-	 memset(
-            open_file,
+	POPEN_FILE_INFORMATION file_info{};
+	file_info = static_cast<POPEN_FILE_INFORMATION>(malloc(sizeof(OPEN_FILE_INFORMATION) + file_name.length() * sizeof(WCHAR) + 7));
+	memset(
+            file_info,
             0,
-            sizeof(OPEN_FILE_INFORMATION) + name.length() * sizeof(WCHAR) + 7
+            sizeof(OPEN_FILE_INFORMATION) + file_name.length() * sizeof(WCHAR) + 7
             );
 
-	   wcscpy(open_file->FileName, L"\\??\\");
-	   wcscat(open_file->FileName, name.c_str());
-       //strcat(open_file->FileName, name.c_str());
-	 
-	open_file->FileNameLength = (USHORT)wcslen(open_file->FileName);
-	open_file->FileSize.QuadPart = 10 * 1024 * 1024;
-	open_file->DriveLetter = 'H';
-
-	for (int i = 0; i < 15; ++i)
-	{
-		open_file->Password[i] = '0';
-	}
-	open_file->PasswordLength = strlen(open_file->Password);
+	wcscpy(file_info->FileName, L"\\??\\");
+    wcscat(file_info->FileName, file_name.c_str());
 	
+	file_info->FileNameLength = static_cast<USHORT>(wcslen(file_info->FileName));
+	file_info->FileSize.QuadPart = file_size * 1024 * 1024;
+	file_info->DriveLetter = drive_letter;
+	
+	std::copy(file_password.cbegin(),file_password.cend(),file_info->Password);
+	file_info->PasswordLength = file_password.length();
 
-	char    		VolumeName[] = "\\\\.\\ :";
+	return file_info;
+	
+}
+
+
+int mount(POPEN_FILE_INFORMATION open_file,size_t number_device)
+{
+	
+	char    		VolumeName[] = R"(\\.\ :)";
     char    		DriveName[] = " :\\";
     char    		DeviceName[255];
 	DWORD			BytesReturned;
@@ -86,9 +95,8 @@ int mount()
        // PrintLastError(&VolumeName[4]);
         return -1;
     }
-	int size1 = sizeof(OPEN_FILE_INFORMATION);
-	int size2 = sizeof(OPEN_FILE_INFORMATION) + open_file->FileNameLength * sizeof(WCHAR) - sizeof(WCHAR);
-	sprintf_s(DeviceName, DEVICE_NAME_PREFIX "%u", 0);
+	
+	sprintf_s(DeviceName, DEVICE_DIR_NAME "%u", number_device);
 	
 	if (!DefineDosDeviceA(
         DDD_RAW_TARGET_PATH,
@@ -143,6 +151,7 @@ int mount()
     SHChangeNotify(SHCNE_DRIVEADD, SHCNF_PATH, DriveName, NULL);
 	std::cout<<"Ok!";
 
+	return 0;
 }
 
 
@@ -151,19 +160,45 @@ int main(void)
 {
 	try
 	{
+		std::cout<<"Type file name:"<<std::endl;
+		    
+		std::wstring file_name;
+		std::getline(std::wcin,file_name);
+		std::cout<<"Type file password:"<<std::endl;
+		std::string password(16,'0');
+		std::getline(std::cin,password);
+		password.resize(16,'0');
+		size_t file_size = 0;
+		std::cout<<"Type file size:"<<std::endl;
+		std::cin>>file_size;
+		char drive_letter;
+		std::cout<<"Type driver letter:"<<std::endl;
+		std::cin>>drive_letter;
+		size_t number = 0;
+		std::cout<<"Type number_device:"<<std::endl;
+		std::cin>>number;
+		
+		
+		
+		mount(
+			create_file_info(file_name,file_size,drive_letter,password),
+			number
+		);
+		
 		
 		//std::cout<<std::endl;
 		//const std::string buffer = "Test";
 		//const std::vector<BYTE> buffer_bytes(buffer.cbegin(), buffer.cend());
-		ved::file::settings settings{};
-
-		settings.dw_creation_disposition = OPEN_EXISTING;
-		settings.dw_desired_access =  GENERIC_READ | GENERIC_WRITE;
-		settings.dw_flags_and_attributes = FILE_FLAG_NO_BUFFERING;
-		settings.ws_file_name = L"\\\\.\\TestLink";
 		
-		const auto ptr = ved::file::create(settings);
-		std::cout<<"Ok"<<std::endl;
+		//ved::file::settings settings{};
+
+		//settings.dw_creation_disposition = OPEN_EXISTING;
+		//settings.dw_desired_access =  GENERIC_READ | GENERIC_WRITE;
+		//settings.dw_flags_and_attributes = FILE_FLAG_NO_BUFFERING;
+		//settings.ws_file_name = L"\\\\.\\TestLink";
+		//
+		//const auto ptr = ved::file::create(settings);
+		//std::cout<<"Ok - device open\nSend ioctl code...\n"<<std::endl;
 
 		//DWORD ret = 0;
 		//auto res = DeviceIoControl(
@@ -181,7 +216,7 @@ int main(void)
 		//{
 		//	std::cout<<"Ok! Number device - "<<ret<<std::endl;
 		//}
-		
+		//
 		//ptr->write(buffer_bytes);
 
 		//mount();
@@ -295,6 +330,8 @@ int main(void)
 	catch (...)
 	{
 	}
+	std::cin.ignore();
+	std::cin.clear();
 	std::cin.get();
    
 }

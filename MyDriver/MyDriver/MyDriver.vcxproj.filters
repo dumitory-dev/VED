@@ -30,5 +30,22 @@
     <ClInclude Include="..\headers\headers.h">
       <Filter>headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\headers\constants.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\libraries.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\codeioctl.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\headers\structs.h">
+      <Filter>headers</Filter>
+    </Text>
+    <Text Include="..\headers\globalvariable.h">
+      <Filter>headers</Filter>
+    </Text>
   </ItemGroup>
 </Project>
