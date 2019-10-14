@@ -14,7 +14,6 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp);
 NTSTATUS CloseFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp);
 
 DRIVER_UNLOAD Unload;
-//DRIVER_DISPATCH StubFunc;
 DRIVER_DISPATCH CreateAndCloseDevice;
 DRIVER_DISPATCH ReadAndWriteDevice;
 DRIVER_DISPATCH ControlDevice;
@@ -28,12 +27,12 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	OBJECT_ATTRIBUTES     ObjectAttributes;
 
 	RtlInitUnicodeString(&unDeviceDirName, DEVICE_DIR_NAME);
-	
+
 #ifdef  DBG
-//	DbgBreakPoint();
+	DbgBreakPoint();
 #endif
-	
-	
+
+
 	InitializeObjectAttributes(
 		&ObjectAttributes,
 		&unDeviceDirName,
@@ -42,7 +41,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		NULL
 	);
 
-	NTSTATUS status  = IoCreateDevice(
+	NTSTATUS status = IoCreateDevice(
 		DriverObject,
 		0,
 		&g_usDeviceName,
@@ -60,19 +59,19 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 
 	IoDeleteSymbolicLink(&g_usSymLinkName);
 	status = IoCreateSymbolicLink(&g_usSymLinkName, &g_usDeviceName);
-	   	
+
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrint("VED: Failed creating Symbolic Link device!");
 		IoDeleteDevice(g_pDeviceObject);
 		return status;
 	}
-	
-    status = ZwCreateDirectoryObject(
+
+	status = ZwCreateDirectoryObject(
 		&g_pDirHandle,
 		DIRECTORY_ALL_ACCESS,
 		&ObjectAttributes);
-	
+
 	if (!NT_SUCCESS(status))
 	{
 		return status;
@@ -83,8 +82,8 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	 * When the handle count reaches zero, the system deletes the object name and appropriately adjusts the object's pointer count.
 	 */
 	ZwMakeTemporaryObject(g_pDirHandle);
-		
-			
+
+
 	DriverObject->DriverUnload = Unload;
 	DriverObject->MajorFunction[IRP_MJ_CREATE] = CreateAndCloseDevice;
 	DriverObject->MajorFunction[IRP_MJ_CLOSE] = CreateAndCloseDevice;
@@ -121,14 +120,17 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		return STATUS_NO_MEDIA_IN_DEVICE;
 	}*/
 
-	//DbgBreakPoint();
+
 	switch (IoStack->Parameters.DeviceIoControl.IoControlCode)
 	{
 
 	case IOCTL_FILE_ADD_DEVICE:
 	{
 		PAGED_CODE();
-		//DbgBreakPoint();
+#ifdef DBG
+		DbgBreakPoint();
+#endif
+
 		status = CreateDevice(
 			g_pDriverObject,
 			g_uCountDevice,
@@ -152,11 +154,11 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		if (g_pDriverObject->DeviceObject != NULL && g_pDriverObject->DeviceObject->NextDevice != NULL)
 		{
 
-			
+
 			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject;
 
-			ULONG index = 0 ;
-			
+			ULONG index = 0;
+
 			while (pDeviceObject_ != g_pDeviceObject)
 			{
 				if (!((PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension)->media_in_device)
@@ -167,15 +169,15 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 				}
 				pDeviceObject_ = pDeviceObject->NextDevice;
 				++index;
-								 
+
 			};
-						
-		}	
+
+		}
 
 		status = STATUS_THREAD_NOT_IN_SESSION;
 		pIrp->IoStatus.Information = 0;
 		break;
-					
+
 	}
 	case IOCTL_FILE_DISK_OPEN_FILE:
 	{
@@ -540,7 +542,7 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 
 		PMOUNTDEV_NAME pMountedName = (PMOUNTDEV_NAME)pIrp->AssociatedIrp.SystemBuffer;
 		pMountedName->NameLength = pDeviceExtension->device_name.Length * sizeof(WCHAR);
-		
+
 
 		if (IoStack->Parameters.DeviceIoControl.OutputBufferLength <
 			pMountedName->NameLength + sizeof(USHORT))
@@ -560,10 +562,10 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 
 	default:
 	{
-		DbgPrint(
+		/*DbgPrint(
 			"VED: Unknown IoControlCode %#x\n",
 			IoStack->Parameters.DeviceIoControl.IoControlCode
-		);
+		);*/
 
 		status = STATUS_INVALID_DEVICE_REQUEST;
 		pIrp->IoStatus.Information = 0;
@@ -596,7 +598,7 @@ VOID Unload(IN PDRIVER_OBJECT pDriverObject)
 	PAGED_CODE();
 
 	IoDeleteDevice(g_pDeviceObject);
-	
+
 	PDEVICE_OBJECT pDeviceObject = pDriverObject->DeviceObject;
 
 
@@ -717,20 +719,20 @@ NTSTATUS ReadAndWriteDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* p
 
 NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType)
 {
-	
+
 	ASSERT(DriverObject != NULL);
 	UNICODE_STRING     usDeviceName;
-	
+
 	usDeviceName.Buffer = (PWCHAR)ExAllocatePoolWithTag(PagedPool, MAXIMUM_FILENAME_LENGTH * 2, FILE_DISK_POOL_TAG);
 	if (usDeviceName.Buffer == NULL)
 	{
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-		
+
 	usDeviceName.Length = 0;
 	usDeviceName.MaximumLength = MAXIMUM_FILENAME_LENGTH * 2;
 	RtlUnicodeStringPrintf(&usDeviceName, DEVICE_DIR_NAME L"%u", uNumber);
-	
+
 	UNICODE_STRING    usSSDDL;
 	RtlInitUnicodeString(&usSSDDL, _T("D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)"));
 
@@ -750,7 +752,7 @@ NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE
 		&pDeviceObject
 	);
 	pDeviceObject->Flags &= ~DO_DEVICE_INITIALIZING;
-	
+
 	if (!NT_SUCCESS(status))
 	{
 		ExFreePool(usDeviceName.Buffer);
@@ -774,7 +776,7 @@ NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE
 		}
 		DbgPrint("VED: Create symbolic link success!\n\r");
 	}*/
-			
+
 
 	//The operating system locks the application's buffer in memory.
 	//It then creates a memory descriptor list (MDL) that identifies the locked memory pages, and passes the MDL to the driver stack.
@@ -910,7 +912,13 @@ VOID Thread(IN PVOID pContext)
 			switch (IoStack->MajorFunction)
 			{
 			case IRP_MJ_READ:
+				//#ifdef DBG
+				//				DbgBreakPoint();
+				//
+				//#endif
+
 				j = IoStack->Parameters.Read.ByteOffset.QuadPart % pDeviceExtension->password.Length;
+
 				pSystemBuffer = (PUCHAR)MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority);
 				if (pSystemBuffer == NULL)
 				{
@@ -948,9 +956,8 @@ VOID Thread(IN PVOID pContext)
 				for (i = 0, j; i < IoStack->Parameters.Read.Length; ++i, j++)
 				{
 					j == pDeviceExtension->password.Length ? j = 0 : j;
-					//pBuffer[i] |= ~i;
 					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
-					//pBuffer[i] = ~pBuffer[i] ^ pBuffer[i];
+
 				}
 
 				RtlCopyMemory(pSystemBuffer, pBuffer, IoStack->Parameters.Read.Length);
@@ -958,6 +965,11 @@ VOID Thread(IN PVOID pContext)
 				break;
 
 			case IRP_MJ_WRITE:
+
+				//#ifdef DBG
+				//				DbgBreakPoint();
+				//
+				//#endif
 
 				j = IoStack->Parameters.Write.ByteOffset.QuadPart % pDeviceExtension->password.Length;
 
@@ -981,11 +993,14 @@ VOID Thread(IN PVOID pContext)
 					break;
 				}
 
+
 				RtlCopyMemory(pBuffer, pSystemBuffer, IoStack->Parameters.Write.Length);
+
+
 				for (i = 0, j; i < IoStack->Parameters.Write.Length; ++i, j++)
 				{
 					j == pDeviceExtension->password.Length ? j = 0 : j;
-					//pBuffer[i] |= ~i;
+
 					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
 
 				}
@@ -1005,13 +1020,11 @@ VOID Thread(IN PVOID pContext)
 				ExFreePool(pBuffer);
 				break;
 
-
 			case IRP_MJ_DEVICE_CONTROL:
 				switch (IoStack->Parameters.DeviceIoControl.IoControlCode)
 				{
 
 				case IOCTL_FILE_DISK_OPEN_FILE:
-					//DbgBreakPoint();
 					pIrp->IoStatus.Status = OpenFile(pDeviceObject, pIrp);
 					break;
 
@@ -1052,11 +1065,11 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
 	POPEN_FILE_INFORMATION pOpenFileInformation = (POPEN_FILE_INFORMATION)pIrp->AssociatedIrp.SystemBuffer;
-
+	
 	pDeviceExtension->file_name.Length = pOpenFileInformation->FileNameLength * sizeof(WCHAR);
 	pDeviceExtension->file_name.MaximumLength = pOpenFileInformation->FileNameLength * sizeof(WCHAR);
 	pDeviceExtension->file_name.Buffer = ExAllocatePoolWithTag(NonPagedPool, pOpenFileInformation->FileNameLength * sizeof(WCHAR), FILE_DISK_POOL_TAG);
-
+	DbgBreakPoint();
 	pDeviceExtension->password.Length = pOpenFileInformation->PasswordLength;
 	pDeviceExtension->password.MaximumLength = MAX_PASSWORD_SIZE;
 	pDeviceExtension->password.Buffer = ExAllocatePoolWithTag(NonPagedPool, pOpenFileInformation->PasswordLength, FILE_DISK_POOL_TAG);
@@ -1102,8 +1115,6 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 	NTSTATUS status = STATUS_SUCCESS;
 
-
-
 	OBJECT_ATTRIBUTES attributes;
 
 	InitializeObjectAttributes(
@@ -1133,9 +1144,12 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 	if (NT_SUCCESS(status))
 	{
+
+
 		DbgPrint("VED: File %.*S opened.\n",
 			usFileName.Length / 2,
 			usFileName.Buffer);
+
 	}
 
 	if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_NO_SUCH_FILE)
