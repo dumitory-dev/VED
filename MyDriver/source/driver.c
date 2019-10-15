@@ -940,6 +940,10 @@ VOID Thread(IN PVOID pContext)
 					break;
 				}
 
+
+
+				IoStack->Parameters.Read.ByteOffset.QuadPart += PASSWORD_OFFSET;
+
 				ZwReadFile(
 					pDeviceExtension->file_handle,
 					NULL,
@@ -952,6 +956,12 @@ VOID Thread(IN PVOID pContext)
 					NULL
 				);
 
+				/*for (i = 0, j; i < IoStack->Parameters.Read.Length; ++i, j++)
+				{
+					j == pDeviceExtension->password.Length ? j = 0 : j;
+					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
+
+				}*/
 
 				for (i = 0, j; i < IoStack->Parameters.Read.Length; ++i, j++)
 				{
@@ -966,10 +976,7 @@ VOID Thread(IN PVOID pContext)
 
 			case IRP_MJ_WRITE:
 
-				//#ifdef DBG
-				//				DbgBreakPoint();
-				//
-				//#endif
+
 
 				j = IoStack->Parameters.Write.ByteOffset.QuadPart % pDeviceExtension->password.Length;
 
@@ -993,9 +1000,7 @@ VOID Thread(IN PVOID pContext)
 					break;
 				}
 
-
 				RtlCopyMemory(pBuffer, pSystemBuffer, IoStack->Parameters.Write.Length);
-
 
 				for (i = 0, j; i < IoStack->Parameters.Write.Length; ++i, j++)
 				{
@@ -1005,7 +1010,16 @@ VOID Thread(IN PVOID pContext)
 
 				}
 
-				ZwWriteFile(
+				IoStack->Parameters.Write.ByteOffset.QuadPart += PASSWORD_OFFSET;
+
+				/*for (i = 0, j; i < IoStack->Parameters.Write.Length; ++i, j++)
+				{
+					j == pDeviceExtension->password.Length ? j = 0 : j;
+					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
+
+				}*/
+				NTSTATUS status_w = STATUS_SUCCESS;
+				status_w = ZwWriteFile(
 					pDeviceExtension->file_handle,
 					NULL,
 					NULL,
@@ -1016,6 +1030,17 @@ VOID Thread(IN PVOID pContext)
 					&IoStack->Parameters.Write.ByteOffset,
 					NULL
 				);
+
+				if (status_w != STATUS_SUCCESS)
+				{
+
+					pIrp->IoStatus.Status = status_w;
+					ExFreePool(pBuffer);
+#ifdef DBG
+					DbgBreakPoint();
+
+#endif
+				}
 
 				ExFreePool(pBuffer);
 				break;
@@ -1065,7 +1090,7 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
 	POPEN_FILE_INFORMATION pOpenFileInformation = (POPEN_FILE_INFORMATION)pIrp->AssociatedIrp.SystemBuffer;
-	
+
 	pDeviceExtension->file_name.Length = pOpenFileInformation->FileNameLength * sizeof(WCHAR);
 	pDeviceExtension->file_name.MaximumLength = pOpenFileInformation->FileNameLength * sizeof(WCHAR);
 	pDeviceExtension->file_name.Buffer = ExAllocatePoolWithTag(NonPagedPool, pOpenFileInformation->FileNameLength * sizeof(WCHAR), FILE_DISK_POOL_TAG);
@@ -1144,7 +1169,54 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 	if (NT_SUCCESS(status))
 	{
+		PUCHAR pPasswordBuffer = (PUCHAR)ExAllocatePoolWithTag(
+			PagedPool,
+			MAX_PASSWORD_SIZE,
+			FILE_DISK_POOL_TAG);
 
+		if (pPasswordBuffer == NULL)
+		{
+			pIrp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+			pIrp->IoStatus.Information = 0;
+
+			ExFreePool(pDeviceExtension->file_name.Buffer);
+			ExFreePool(pDeviceExtension->password.Buffer);
+			RtlFreeUnicodeString(&usFileName);
+			ZwClose(pDeviceExtension->file_handle);
+			return status;
+
+		}
+
+		ZwReadFile(
+			pDeviceExtension->file_handle,
+			NULL,
+			NULL,
+			NULL,
+			&pIrp->IoStatus,
+			pPasswordBuffer,
+			MAX_PASSWORD_SIZE,
+			NULL,
+			NULL
+		);
+
+		for (int i = 0; i < MAX_PASSWORD_SIZE; ++i)
+		{
+			if (pPasswordBuffer[i] != pDeviceExtension->password.Buffer[i])
+			{
+				ExFreePool(pDeviceExtension->file_name.Buffer);
+				ExFreePool(pDeviceExtension->password.Buffer);
+				ExFreePool(pPasswordBuffer);
+				RtlFreeUnicodeString(&usFileName);
+				ZwClose(pDeviceExtension->file_handle);
+				status = STATUS_INVALID_PARAMETER;
+
+				return status;
+			}
+		}
+
+#ifdef DBG
+		DbgPrint("VED: Password is valid!.\n\r");
+#endif
 
 		DbgPrint("VED: File %.*S opened.\n",
 			usFileName.Length / 2,
@@ -1199,6 +1271,8 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 		if (pIrp->IoStatus.Information == FILE_CREATED)
 		{
+
+
 			DbgPrint("VED: File %.*S created.\n\r",
 				usFileName.Length / 2,
 				usFileName.Buffer);
@@ -1249,6 +1323,50 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 			DbgPrint("VED: eof set to %I64u.\n",
 				EofFile.EndOfFile.QuadPart);
 
+			
+			PUCHAR pPasswordBuffer = (PUCHAR)ExAllocatePoolWithTag(
+				PagedPool,
+				PASSWORD_OFFSET,
+				FILE_DISK_POOL_TAG);
+
+			if (pPasswordBuffer == NULL)
+			{
+				ExFreePool(pDeviceExtension->file_name.Buffer);
+				ExFreePool(pDeviceExtension->password.Buffer);
+				RtlFreeUnicodeString(&usFileName);
+				ZwClose(pDeviceExtension->file_handle);
+				return status;
+			}
+
+			for (int i = 0; i < PASSWORD_OFFSET; ++i)
+			{
+				pPasswordBuffer[i] = pDeviceExtension->password.Buffer[i];
+			}
+
+			if (ZwWriteFile(
+				pDeviceExtension->file_handle,
+				NULL,
+				NULL,
+				NULL,
+				&pIrp->IoStatus,
+				pPasswordBuffer,
+				PASSWORD_OFFSET,
+				NULL, // byte offset
+				NULL
+			) != STATUS_SUCCESS)
+			{
+				DbgPrint("VED: Failed write password in file!.\n\r");
+				ExFreePool(pDeviceExtension->file_name.Buffer);
+				ExFreePool(pDeviceExtension->password.Buffer);
+				RtlFreeUnicodeString(&usFileName);
+				ZwClose(pDeviceExtension->file_handle);
+				return status;
+
+			}
+
+			DbgPrint("VED: Password was be written!\n\r");
+			ExFreePool(pPasswordBuffer);
+			
 		}
 
 	}
@@ -1313,6 +1431,7 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 		FileAlignmentInformation
 	);
 
+
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrint("VED: Failed ZwQueryInformationFile!(FILE_ALIGNMENT_INFORMATION).\n\r");
@@ -1324,6 +1443,7 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 	}
 
 	pDeviceObject->AlignmentRequirement = FileAlignmentInfo.AlignmentRequirement;
+
 	/*
 	 * Specifies one or more system-defined constants, combined with a bitwise OR operation, that provide additional information about the driver's device.
 	 * These constants include the following:

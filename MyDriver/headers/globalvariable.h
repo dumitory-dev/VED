@@ -7,3 +7,4 @@ PDRIVER_OBJECT g_pDriverObject = NULL;
 
 UNICODE_STRING g_usDeviceName = RTL_CONSTANT_STRING(L"\\Device\\EntryPoint");
 UNICODE_STRING g_usSymLinkName = RTL_CONSTANT_STRING(L"\\??\\TestLink");
+
