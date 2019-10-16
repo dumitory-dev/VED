@@ -34,6 +34,9 @@
     <Filter Include="source\classes\file">
       <UniqueIdentifier>{1bccc679-5207-4ae3-98d4-b65b27712c79}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\classes\instal_manager">
+      <UniqueIdentifier>{fc6028ee-707f-4877-9f2d-e0f493d27ece}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -50,6 +53,9 @@
     </ClCompile>
     <ClCompile Include="source\classes\file\File.cpp">
       <Filter>source\classes\file</Filter>
+    </ClCompile>
+    <ClCompile Include="source\classes\install_manager\install_manager.cpp">
+      <Filter>source\classes\instal_manager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -70,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="source\classes\file\File.h">
       <Filter>source\classes\file</Filter>
+    </ClInclude>
+    <ClInclude Include="source\classes\install_manager\install_manager.h">
+      <Filter>source\classes\instal_manager</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

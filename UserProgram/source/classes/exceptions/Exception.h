@@ -21,7 +21,7 @@ namespace ved
 		ULONG m_ulCode{};
 
 	public:
-		
+
 		explicit c_exception(const std::wstring& ws_message) : c_exception(ws_message, {}) { }
 
 		explicit c_exception(const ULONG ul_code) : c_exception({}, ul_code) { }
@@ -56,7 +56,7 @@ namespace ved
 
 	};
 
-	
+
 	class c_win_api_exception : public c_exception
 	{
 
@@ -94,14 +94,6 @@ namespace ved
 
 	};
 
-	class c_registry_exception final : public c_win_api_exception
-	{
-
-	public:
-
-		using c_win_api_exception::c_win_api_exception;
-
-	};
 
 	class c_command_line_argument_exception final : public c_win_api_exception
 	{
@@ -202,6 +194,12 @@ namespace ved
 
 		CIndexOutOfRangeException(void) : c_exception(L"IndexOutOfRangeException") { }
 
+	};
+
+	class driver_exception : public c_win_api_exception
+	{
+	public:
+		using c_win_api_exception::c_win_api_exception;
 	};
 
 }

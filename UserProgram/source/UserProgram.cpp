@@ -2,6 +2,7 @@
 #define USERMODE
 #include "classes/file/File.h"
 #include <Windows.h>
+#include "classes/install_manager/install_manager.h"
 #include <Shlobj.h>
 
 #define DEVICE_BASE_NAME	"\\FileDisk"
@@ -314,6 +315,26 @@ void unmount_disk()
 }
 
 
+void run_driver(void)
+{
+	const std::wstring device_name = L"TestMyDriver";
+	const std::wstring path = L"%SystemRoot%\\System32\\Drivers\\MyDriver.sys";
+
+	ved::install_manager::install_service(path,device_name);
+	ved::install_manager::load_service(device_name);
+		
+}
+
+void stop_driver(void)
+{
+	const std::wstring device_name = L"TestMyDriver";
+	const std::wstring path = L"%SystemRoot%\\System32\\Drivers\\MyDriver.sys";
+
+	ved::install_manager::uninstall_service(device_name);
+	ved::install_manager::unload_service(device_name);
+		
+}
+
 int wmain(void)
 {
 	try
@@ -323,7 +344,7 @@ int wmain(void)
 		setlocale(LC_ALL,"");
 		 
 		size_t choose = 0;
-		std::wcout<<L"1. - Add device\n2. - Mount disk\n3. - Un mount disk\n";
+		std::wcout<<L"1. - Add device\n2. - Mount disk\n3. - Un mount disk\n4. - Install and run driver\n5. - Stop and delete driver";
 		std::wcin >> choose;
 
 		switch (choose)
@@ -337,6 +358,12 @@ int wmain(void)
 		case 3:
 			unmount_disk();
 			break;
+		case 4:
+			run_driver();
+			break;
+		case 5:
+			stop_driver();
+		break;
 		default:
 			throw std::invalid_argument("Invalid parameter!");
 		}
@@ -476,7 +503,7 @@ int wmain(void)
 		//
 
 	}
-	catch (const ved::c_win_api_exception& error)
+	catch (const ved::driver_exception & error)
 	{
 		std::wcout << error.GetMessageW() << std::endl;
 	}

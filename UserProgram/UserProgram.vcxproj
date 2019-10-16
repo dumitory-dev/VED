@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="source\classes\driver\driver.cpp" />
     <ClCompile Include="source\classes\file\File.cpp" />
+    <ClCompile Include="source\classes\install_manager\install_manager.cpp" />
     <ClCompile Include="source\classes\wrap\Wrap.cpp" />
     <ClCompile Include="source\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -34,6 +35,7 @@
     <ClInclude Include="source\classes\driver\driver.h" />
     <ClInclude Include="source\classes\exceptions\Exception.h" />
     <ClInclude Include="source\classes\file\File.h" />
+    <ClInclude Include="source\classes\install_manager\install_manager.h" />
     <ClInclude Include="source\classes\wrap\Wrap.h" />
     <ClInclude Include="source\interface\IFile.h" />
     <ClInclude Include="source\stdafx.h" />
