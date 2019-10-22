@@ -1,6 +1,6 @@
 #pragma once
 #include "libraries.h"
-ULONG g_uCountDevice = 0;
+ULONG g_uCountDevice = 1;
 HANDLE g_pDirHandle = NULL;
 PDEVICE_OBJECT g_pDeviceObject = NULL;
 PDRIVER_OBJECT g_pDriverObject = NULL;

@@ -22,9 +22,6 @@
     <Filter Include="source\interfaces">
       <UniqueIdentifier>{1a3ae81a-240c-420e-bfc3-d0502bca65b2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\classes\driver">
-      <UniqueIdentifier>{5dd34adf-f614-4ae4-a379-0d70b37f18a9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\classes\wrap">
       <UniqueIdentifier>{60ce7407-84cb-4bab-a3cb-c91d6bcb7a4a}</UniqueIdentifier>
     </Filter>
@@ -37,6 +34,15 @@
     <Filter Include="source\classes\instal_manager">
       <UniqueIdentifier>{fc6028ee-707f-4877-9f2d-e0f493d27ece}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\classes\driver_disk">
+      <UniqueIdentifier>{0aa84fdd-8581-4eaa-9eb8-05aaaa55af3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\classes\device">
+      <UniqueIdentifier>{5dd34adf-f614-4ae4-a379-0d70b37f18a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\define_device_manager">
+      <UniqueIdentifier>{f452b114-52c3-4afd-844e-830f8812248e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -45,25 +51,28 @@
     <ClCompile Include="source\UserProgram.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="source\classes\driver\driver.cpp">
-      <Filter>source\classes\driver</Filter>
-    </ClCompile>
     <ClCompile Include="source\classes\wrap\Wrap.cpp">
       <Filter>source\classes\wrap</Filter>
     </ClCompile>
-    <ClCompile Include="source\classes\file\File.cpp">
-      <Filter>source\classes\file</Filter>
-    </ClCompile>
     <ClCompile Include="source\classes\install_manager\install_manager.cpp">
       <Filter>source\classes\instal_manager</Filter>
+    </ClCompile>
+    <ClCompile Include="source\classes\file\file.cpp">
+      <Filter>source\classes\file</Filter>
+    </ClCompile>
+    <ClCompile Include="source\classes\driver_disk\driver_disk.cpp">
+      <Filter>source\classes\driver_disk</Filter>
+    </ClCompile>
+    <ClCompile Include="source\classes\device\device.cpp">
+      <Filter>source\classes\device</Filter>
+    </ClCompile>
+    <ClCompile Include="source\classes\define_device\define_device_manager.cpp">
+      <Filter>source\define_device_manager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\stdafx.h">
       <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\classes\driver\driver.h">
-      <Filter>source\classes\driver</Filter>
     </ClInclude>
     <ClInclude Include="source\interface\IFile.h">
       <Filter>source\interfaces</Filter>
@@ -74,11 +83,20 @@
     <ClInclude Include="source\classes\exceptions\Exception.h">
       <Filter>source\classes\exceptions</Filter>
     </ClInclude>
-    <ClInclude Include="source\classes\file\File.h">
-      <Filter>source\classes\file</Filter>
-    </ClInclude>
     <ClInclude Include="source\classes\install_manager\install_manager.h">
       <Filter>source\classes\instal_manager</Filter>
+    </ClInclude>
+    <ClInclude Include="source\classes\file\file.h">
+      <Filter>source\classes\file</Filter>
+    </ClInclude>
+    <ClInclude Include="source\classes\driver_disk\driver_disk.h">
+      <Filter>source\classes\driver_disk</Filter>
+    </ClInclude>
+    <ClInclude Include="source\classes\device\device.h">
+      <Filter>source\classes\device</Filter>
+    </ClInclude>
+    <ClInclude Include="source\classes\define_device\define_device_manager.h">
+      <Filter>source\define_device_manager</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

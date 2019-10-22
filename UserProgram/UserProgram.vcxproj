@@ -19,8 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\classes\driver\driver.cpp" />
-    <ClCompile Include="source\classes\file\File.cpp" />
+    <ClCompile Include="source\classes\define_device\define_device_manager.cpp" />
+    <ClCompile Include="source\classes\device\device.cpp" />
+    <ClCompile Include="source\classes\driver_disk\driver_disk.cpp" />
+    <ClCompile Include="source\classes\file\file.cpp" />
     <ClCompile Include="source\classes\install_manager\install_manager.cpp" />
     <ClCompile Include="source\classes\wrap\Wrap.cpp" />
     <ClCompile Include="source\stdafx.cpp">
@@ -32,9 +34,11 @@
     <ClCompile Include="source\UserProgram.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\classes\driver\driver.h" />
+    <ClInclude Include="source\classes\define_device\define_device_manager.h" />
+    <ClInclude Include="source\classes\device\device.h" />
+    <ClInclude Include="source\classes\driver_disk\driver_disk.h" />
     <ClInclude Include="source\classes\exceptions\Exception.h" />
-    <ClInclude Include="source\classes\file\File.h" />
+    <ClInclude Include="source\classes\file\file.h" />
     <ClInclude Include="source\classes\install_manager\install_manager.h" />
     <ClInclude Include="source\classes\wrap\Wrap.h" />
     <ClInclude Include="source\interface\IFile.h" />
@@ -150,7 +154,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>

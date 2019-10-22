@@ -5,6 +5,8 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <map>
 #include <sstream>
+#include <algorithm>
 #endif
 

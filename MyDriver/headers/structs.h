@@ -4,7 +4,7 @@
 
 typedef struct _OPEN_FILE_INFORMATION {
 	LARGE_INTEGER	FileSize;
-	UCHAR			DriveLetter;
+	WCHAR			DriveLetter;
 	USHORT			FileNameLength;
 	USHORT			PasswordLength;
 	CHAR			Password[MAX_PASSWORD_SIZE];

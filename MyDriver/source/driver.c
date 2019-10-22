@@ -151,30 +151,42 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 	{
 		PAGED_CODE();
 
-		if (g_pDriverObject->DeviceObject != NULL && g_pDriverObject->DeviceObject->NextDevice != NULL)
+#ifdef DBG
+			DbgBreakPoint();
+#endif
+		if (g_pDriverObject->DeviceObject->NextDevice != NULL)
 		{
+			
+			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject->NextDevice;
 
+			ULONG index = 1;
 
-			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject;
-
-			ULONG index = 0;
-
-			while (pDeviceObject_ != g_pDeviceObject)
+			while (pDeviceObject_ != NULL)
 			{
-				if (!((PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension)->media_in_device)
+				if ((PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension == NULL)
 				{
-					pIrp->IoStatus.Status = STATUS_SUCCESS;
-					pIrp->IoStatus.Information = index;
 					break;
 				}
-				pDeviceObject_ = pDeviceObject->NextDevice;
-				++index;
+				
+				if (((PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension)->media_in_device)
+				{
+					pDeviceObject_ = pDeviceObject->NextDevice;
+				    ++index;
+					continue;
+				}
+
+				pIrp->IoStatus.Status = STATUS_SUCCESS;
+				pIrp->IoStatus.Information = index;
+				IoCompleteRequest(pIrp, IO_NO_INCREMENT);
+				return pIrp->IoStatus.Status;
+			
+				
 
 			};
-
+			
 		}
 
-		status = STATUS_THREAD_NOT_IN_SESSION;
+		status = STATUS_SUCCESS;
 		pIrp->IoStatus.Information = 0;
 		break;
 
@@ -1094,7 +1106,10 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 	pDeviceExtension->file_name.Length = pOpenFileInformation->FileNameLength * sizeof(WCHAR);
 	pDeviceExtension->file_name.MaximumLength = pOpenFileInformation->FileNameLength * sizeof(WCHAR);
 	pDeviceExtension->file_name.Buffer = ExAllocatePoolWithTag(NonPagedPool, pOpenFileInformation->FileNameLength * sizeof(WCHAR), FILE_DISK_POOL_TAG);
+#ifdef DBG
 	DbgBreakPoint();
+#endif
+	
 	pDeviceExtension->password.Length = pOpenFileInformation->PasswordLength;
 	pDeviceExtension->password.MaximumLength = MAX_PASSWORD_SIZE;
 	pDeviceExtension->password.Buffer = ExAllocatePoolWithTag(NonPagedPool, pOpenFileInformation->PasswordLength, FILE_DISK_POOL_TAG);
