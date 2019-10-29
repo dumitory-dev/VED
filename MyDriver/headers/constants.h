@@ -1,7 +1,8 @@
 #pragma once
 #include "libraries.h"
 #define MAX_PASSWORD_SIZE 16
-#define SECTOR_SIZE 512
+#define SECTOR_SIZE 2048
+
 #define WIN9X_COMPAT_SPINLOCK
 
 #define FILE_DISK_POOL_TAG 'ksiD'
@@ -19,7 +20,7 @@
 #define DEVICE_BASE_NAME	_T("\\FileDisk")
 #define DEVICE_DIR_NAME		_T("\\Device")	DEVICE_BASE_NAME
 #define DEVICE_NAME_PREFIX	DEVICE_DIR_NAME	DEVICE_BASE_NAME
-#define PASSWORD_OFFSET SECTOR_SIZE
+#define PASSWORD_OFFSET 512
 
 
 

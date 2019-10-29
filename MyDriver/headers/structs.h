@@ -1,6 +1,7 @@
 #pragma once
 #include "libraries.h"
 #include "constants.h"
+#include  "crypt.h"
 
 typedef struct _OPEN_FILE_INFORMATION {
 	LARGE_INTEGER	FileSize;
@@ -25,5 +26,7 @@ typedef struct _DEVICE_EXTENSION {
     KEVENT                      request_event;
     PVOID                       thread_pointer;
     BOOLEAN                     terminate_thread;
+	
+
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 

@@ -141,8 +141,11 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Link>
-      <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;$(DDK_LIB_PATH)bufferoverflowk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;$(DDK_LIB_PATH)bufferoverflowk.lib;$(DDK_LIB_PATH)Cng.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
@@ -161,11 +164,13 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\source\crypt.c" />
     <ClCompile Include="..\source\driver.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\headers\codeioctl.h" />
     <ClInclude Include="..\headers\constants.h" />
+    <ClInclude Include="..\headers\crypt.h" />
     <ClInclude Include="..\headers\headers.h" />
     <ClInclude Include="..\headers\libraries.h" />
   </ItemGroup>

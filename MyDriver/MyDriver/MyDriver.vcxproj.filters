@@ -25,6 +25,9 @@
     <ClCompile Include="..\source\driver.c">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\crypt.c">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\headers\headers.h">
@@ -37,6 +40,9 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="..\headers\codeioctl.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\crypt.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>

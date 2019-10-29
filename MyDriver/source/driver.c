@@ -1,4 +1,5 @@
 #include "../headers/headers.h"
+#include "../headers/crypt.h"
 
 /*
 INFO BUILD:
@@ -152,11 +153,11 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		PAGED_CODE();
 
 #ifdef DBG
-			DbgBreakPoint();
+		DbgBreakPoint();
 #endif
 		if (g_pDriverObject->DeviceObject->NextDevice != NULL)
 		{
-			
+
 			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject->NextDevice;
 
 			ULONG index = 1;
@@ -167,11 +168,11 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 				{
 					break;
 				}
-				
+
 				if (((PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension)->media_in_device)
 				{
 					pDeviceObject_ = pDeviceObject->NextDevice;
-				    ++index;
+					++index;
 					continue;
 				}
 
@@ -179,11 +180,11 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 				pIrp->IoStatus.Information = index;
 				IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 				return pIrp->IoStatus.Status;
-			
-				
+
+
 
 			};
-			
+
 		}
 
 		status = STATUS_SUCCESS;
@@ -368,7 +369,12 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		break;
 	}
 
-	case IOCTL_DISK_IS_WRITABLE:
+	 case IOCTL_DISK_IS_WRITABLE:
+    {
+               status = STATUS_SUCCESS;
+            pIrp->IoStatus.Information = 0;
+           break;
+    }
 	case IOCTL_DISK_MEDIA_REMOVAL:
 	case IOCTL_STORAGE_MEDIA_REMOVAL:
 	{
@@ -380,7 +386,6 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 
 	case IOCTL_DISK_SET_PARTITION_INFO:
 	{
-		//Sets partition information for the specified disk partition.
 		if (IoStack->Parameters.DeviceIoControl.InputBufferLength <
 			sizeof(SET_PARTITION_INFORMATION))
 		{
@@ -809,6 +814,7 @@ NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE
 	pDeviceExtension->device_name.Buffer = usDeviceName.Buffer;
 	pDeviceExtension->device_number = uNumber;
 	pDeviceExtension->device_type = DeviceType;
+	
 
 
 	InitializeListHead(&pDeviceExtension->list_head);
@@ -891,8 +897,11 @@ VOID Thread(IN PVOID pContext)
 	PLIST_ENTRY         pRequest;
 	PUCHAR pSystemBuffer = NULL;
 	PUCHAR pBuffer = NULL;
+
 	PIRP pIrp = NULL;
-	ULONGLONG i = 0, j = 0;
+	NTSTATUS status = 0;
+	ULONG uCountBlock = 0;
+	//ULONGLONG i = 0, j = 0;
 
 	while (TRUE)
 	{
@@ -924,138 +933,137 @@ VOID Thread(IN PVOID pContext)
 			switch (IoStack->MajorFunction)
 			{
 			case IRP_MJ_READ:
-				//#ifdef DBG
-				//				DbgBreakPoint();
-				//
-				//#endif
 
-				j = IoStack->Parameters.Read.ByteOffset.QuadPart % pDeviceExtension->password.Length;
-
-				pSystemBuffer = (PUCHAR)MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority);
-				if (pSystemBuffer == NULL)
+				uCountBlock = 0;
+				/*j = IoStack->Parameters.Read.ByteOffset.QuadPart % pDeviceExtension->password.Length;
+				if (j != 0 || IoStack->Parameters.Read.Length % 2048  != 0 || IoStack->Parameters.Read.ByteOffset.QuadPart % 2048 != 0)
 				{
-					pIrp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
-					pIrp->IoStatus.Information = 0;
-					break;
-				}
-
-				pBuffer = (PUCHAR)ExAllocatePoolWithTag(
-					PagedPool,
-					IoStack->Parameters.Read.Length,
-					FILE_DISK_POOL_TAG);
-
-
-				if (pBuffer == NULL)
-				{
-					pIrp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
-					pIrp->IoStatus.Information = 0;
-					break;
-				}
-
-
-
+					DbgBreakPoint();
+				}*/
+                pSystemBuffer = (PUCHAR) MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority);
+                if (pSystemBuffer == NULL)
+                {
+                    pIrp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+                    pIrp->IoStatus.Information = 0;
+                    break;
+                }
+                pBuffer = (PUCHAR) ExAllocatePoolWithTag(NonPagedPool, IoStack->Parameters.Read.Length, FILE_DISK_POOL_TAG);
+                if (pBuffer == NULL)
+                {
+                    pIrp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+                    pIrp->IoStatus.Information = 0;
+                    break;
+                }
 				IoStack->Parameters.Read.ByteOffset.QuadPart += PASSWORD_OFFSET;
-
-				ZwReadFile(
-					pDeviceExtension->file_handle,
-					NULL,
-					NULL,
-					NULL,
-					&pIrp->IoStatus,
-					pBuffer,
-					IoStack->Parameters.Read.Length,
-					&IoStack->Parameters.Read.ByteOffset,
-					NULL
-				);
-
-				/*for (i = 0, j; i < IoStack->Parameters.Read.Length; ++i, j++)
+				
+                ZwReadFile(
+                    pDeviceExtension->file_handle,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &pIrp->IoStatus,
+                    pBuffer,
+                    IoStack->Parameters.Read.Length,
+                    &IoStack->Parameters.Read.ByteOffset,
+                    NULL
+                    );
+				/*for (i=0, j; i < IoStack->Parameters.Read.Length; ++i, j++)
 				{
 					j == pDeviceExtension->password.Length ? j = 0 : j;
 					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
-
 				}*/
 
-				for (i = 0, j; i < IoStack->Parameters.Read.Length; ++i, j++)
+
+				uCountBlock =  IoStack->Parameters.Read.Length / SECTOR_SIZE;
+				ULONG uMemoryOffset = 0;
+				for (ULONG index = 0; index < uCountBlock; ++index)
 				{
-					j == pDeviceExtension->password.Length ? j = 0 : j;
-					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
-
+					//Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer + uMemoryOffset), SECTOR_SIZE);
+					//EncryptDecrypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(pBuffer + uMemoryOffset), SECTOR_SIZE,FALSE);
+					if (DecryptEncrypt((UCHAR*)pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,pBuffer + uMemoryOffset, SECTOR_SIZE,FALSE) != STATUS_SUCCESS)
+					{
+						DbgBreakPoint();
+					}
+					uMemoryOffset += SECTOR_SIZE;
+										
 				}
-
-				RtlCopyMemory(pSystemBuffer, pBuffer, IoStack->Parameters.Read.Length);
-				ExFreePool(pBuffer);
-				break;
+							
+				
+				//Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)pBuffer, IoStack->Parameters.Read.Length);
+				
+                RtlCopyMemory(pSystemBuffer, pBuffer, IoStack->Parameters.Read.Length);
+                ExFreePool(pBuffer);
+                break;
 
 			case IRP_MJ_WRITE:
-
-
-
-				j = IoStack->Parameters.Write.ByteOffset.QuadPart % pDeviceExtension->password.Length;
-
-				if ((IoStack->Parameters.Write.ByteOffset.QuadPart +
-					IoStack->Parameters.Write.Length) >
-					pDeviceExtension->file_size.QuadPart)
+				uCountBlock = 0;
+				/*j = IoStack->Parameters.Write.ByteOffset.QuadPart % pDeviceExtension->password.Length;
+				if ( IoStack->Parameters.Write.ByteOffset.QuadPart % 2048 == 0)
 				{
-					pIrp->IoStatus.Status = STATUS_INVALID_PARAMETER;
-					pIrp->IoStatus.Information = 0;
-					break;
-				}
-
+					DbgBreakPoint();
+				}*/
+                if ((IoStack->Parameters.Write.ByteOffset.QuadPart +
+                     IoStack->Parameters.Write.Length) >
+                     pDeviceExtension->file_size.QuadPart)
+                {
+                    pIrp->IoStatus.Status = STATUS_INVALID_PARAMETER;
+                    pIrp->IoStatus.Information = 0;
+                    break;
+                }
 				pSystemBuffer = MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority);
-
 				pBuffer = (PUCHAR)ExAllocatePoolWithTag(PagedPool, IoStack->Parameters.Write.Length, FILE_DISK_POOL_TAG);
-
 				if (pBuffer == NULL || pSystemBuffer == NULL)
 				{
 					pIrp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 					pIrp->IoStatus.Information = 0;
 					break;
 				}
-
+				
 				RtlCopyMemory(pBuffer, pSystemBuffer, IoStack->Parameters.Write.Length);
-
-				for (i = 0, j; i < IoStack->Parameters.Write.Length; ++i, j++)
+				
+				uCountBlock =  IoStack->Parameters.Read.Length / SECTOR_SIZE;
+				ULONG uMemoryOffsetWrite = 0;
+				for (ULONG indexWrite = 0; indexWrite < uCountBlock; ++indexWrite)
 				{
-					j == pDeviceExtension->password.Length ? j = 0 : j;
-
-					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
-
+					//Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer + uMemoryOffsetWrite), SECTOR_SIZE);
+					//EncryptDecrypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(pBuffer + uMemoryOffsetWrite), SECTOR_SIZE,TRUE);
+					//
+					if (DecryptEncrypt((UCHAR*)pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(pBuffer + uMemoryOffsetWrite), SECTOR_SIZE,TRUE) != STATUS_SUCCESS)
+					{
+						DbgBreakPoint();
+					}
+					
+					
+					uMemoryOffsetWrite += SECTOR_SIZE;
+										
 				}
 
-				IoStack->Parameters.Write.ByteOffset.QuadPart += PASSWORD_OFFSET;
-
-				/*for (i = 0, j; i < IoStack->Parameters.Write.Length; ++i, j++)
+				
+				
+				
+				/*for (i=0, j; i < IoStack->Parameters.Write.Length; ++i, j++)
 				{
 					j == pDeviceExtension->password.Length ? j = 0 : j;
 					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
-
 				}*/
-				NTSTATUS status_w = STATUS_SUCCESS;
-				status_w = ZwWriteFile(
-					pDeviceExtension->file_handle,
-					NULL,
-					NULL,
-					NULL,
-					&pIrp->IoStatus,
-					pBuffer,
-					IoStack->Parameters.Write.Length,
-					&IoStack->Parameters.Write.ByteOffset,
-					NULL
-				);
-
-				if (status_w != STATUS_SUCCESS)
+				IoStack->Parameters.Read.ByteOffset.QuadPart += PASSWORD_OFFSET;
+				if (ZwWriteFile(
+                    pDeviceExtension->file_handle,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &pIrp->IoStatus,
+                    pBuffer,
+                    IoStack->Parameters.Write.Length,
+                    &IoStack->Parameters.Write.ByteOffset,
+                    NULL
+                    ) != STATUS_SUCCESS)
 				{
-
-					pIrp->IoStatus.Status = status_w;
-					ExFreePool(pBuffer);
-#ifdef DBG
 					DbgBreakPoint();
-
-#endif
 				}
-
 				ExFreePool(pBuffer);
-				break;
+                break;
+				
 
 			case IRP_MJ_DEVICE_CONTROL:
 				switch (IoStack->Parameters.DeviceIoControl.IoControlCode)
@@ -1109,7 +1117,7 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 #ifdef DBG
 	DbgBreakPoint();
 #endif
-	
+
 	pDeviceExtension->password.Length = pOpenFileInformation->PasswordLength;
 	pDeviceExtension->password.MaximumLength = MAX_PASSWORD_SIZE;
 	pDeviceExtension->password.Buffer = ExAllocatePoolWithTag(NonPagedPool, pOpenFileInformation->PasswordLength, FILE_DISK_POOL_TAG);
@@ -1152,6 +1160,7 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 		pDeviceExtension->file_name.Buffer,
 		pDeviceExtension->file_name.Length * sizeof(WCHAR)
 	);
+
 
 	NTSTATUS status = STATUS_SUCCESS;
 
@@ -1214,6 +1223,13 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 			NULL
 		);
 
+		DecryptEncrypt(
+			(UCHAR*)pDeviceExtension->password.Buffer,
+			MAX_PASSWORD_SIZE,
+			pPasswordBuffer,
+			MAX_PASSWORD_SIZE,
+			FALSE);
+		
 		for (int i = 0; i < MAX_PASSWORD_SIZE; ++i)
 		{
 			if (pPasswordBuffer[i] != pDeviceExtension->password.Buffer[i])
@@ -1248,7 +1264,7 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 				usFileName.Buffer);
 
 			ExFreePool(pDeviceExtension->file_name.Buffer);
-			//ExFreePool(pDeviceExtension->password.Buffer);
+			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
 
 			pIrp->IoStatus.Status = STATUS_NO_SUCH_FILE;
@@ -1338,9 +1354,9 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 			DbgPrint("VED: eof set to %I64u.\n",
 				EofFile.EndOfFile.QuadPart);
 
-			
+
 			PUCHAR pPasswordBuffer = (PUCHAR)ExAllocatePoolWithTag(
-				PagedPool,
+				NonPagedPool,
 				PASSWORD_OFFSET,
 				FILE_DISK_POOL_TAG);
 
@@ -1352,11 +1368,20 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 				ZwClose(pDeviceExtension->file_handle);
 				return status;
 			}
+			memset(pPasswordBuffer,0,PASSWORD_OFFSET);
 
-			for (int i = 0; i < PASSWORD_OFFSET; ++i)
+			for (int i = 0; i < pDeviceExtension->password.Length; ++i)
 			{
 				pPasswordBuffer[i] = pDeviceExtension->password.Buffer[i];
 			}
+
+			DecryptEncrypt(
+				(UCHAR*)pDeviceExtension->password.Buffer,
+				pDeviceExtension->password.Length,
+				pPasswordBuffer,
+				pDeviceExtension->password.Length,
+				TRUE );
+			
 
 			if (ZwWriteFile(
 				pDeviceExtension->file_handle,
@@ -1381,7 +1406,7 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 			DbgPrint("VED: Password was be written!\n\r");
 			ExFreePool(pPasswordBuffer);
-			
+
 		}
 
 	}
