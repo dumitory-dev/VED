@@ -25,7 +25,7 @@ namespace ved
 
 
 		[[nodiscard]] bool check_define(void) const;
-		void add_device(const std::wstring& path_device);
+		void link_device(const std::wstring& path_device);
 		void delete_define(void) const;
 		void report_define(void) const;
 		void report_delete_define(void) const;

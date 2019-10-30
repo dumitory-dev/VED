@@ -29,7 +29,7 @@ namespace ved
 
 			static _OPEN_FILE_INFORMATION* make(
 				const std::wstring& file_name,
-				size_t file_size,
+				LARGE_INTEGER file_size,
 				WCHAR drive_letter,
 				const std::string& file_password);
 
@@ -48,20 +48,27 @@ namespace ved
 			return driver;
 		}
 
-		void connect_to_main_device(const std::wstring & path)
+		void connect_to_main_device(const std::wstring& path)
 		{
 			this->main_device_ = device(path);
 			this->main_device_.connect();
 			this->path_main_device_ = path;
 		}
 
+		auto is_connected(void) const noexcept {
+
+			return this->main_device_.is_connect();
+		}
+
 		static ved::driver_disk::POPEN_FILE_INFORMATION create_file_info(
-			const std::wstring& file_name, 
-			size_t file_size, 
+			const std::wstring& file_name,
+			size_t file_size,
 			char drive_letter,
 			const std::string& file_password);
-		
+
 		void mount_disk(POPEN_FILE_INFORMATION open_file) const;
+
+		void create_file_disk(POPEN_FILE_INFORMATION open_file) const;
 
 		static void un_mount_disk(WCHAR letter);
 
@@ -71,12 +78,14 @@ namespace ved
 		~driver_disk(void) = default;
 
 
-		const wchar_t* letter_prefix_ = LR"(\\.\)";
-		const wchar_t* drive_prefix_ = L":\\";
+		[[nodiscard]] size_t get_free_number_device(void)const;
+			   		
 		std::wstring path_main_device_{};
 
 		device main_device_{};
 
 
 	};
+
 }
+

@@ -2,11 +2,11 @@
 namespace ved
 {
 	driver_disk::_OPEN_FILE_INFORMATION* driver_disk::_OPEN_FILE_INFORMATION::make(
-		const std::wstring& file_name, size_t file_size, WCHAR drive_letter, const std::string& file_password)
+		const std::wstring& file_name, LARGE_INTEGER file_size, WCHAR drive_letter, const std::string& file_password)
 	{
 		if (file_name.empty()
 			||
-			!file_size
+			!file_size.QuadPart
 			||
 			file_password.length() != 16
 			)
@@ -33,7 +33,7 @@ namespace ved
 		wcscat(file_info->FileName, file_name.c_str());
 
 		file_info->FileNameLength = static_cast<USHORT>(wcslen(file_info->FileName));
-		file_info->FileSize.QuadPart = static_cast<LONGLONG>(file_size) * 1024 * 1024;
+		file_info->FileSize.QuadPart = file_size.QuadPart;
 		file_info->DriveLetter = drive_letter;
 
 		std::copy(file_password.cbegin(), file_password.cend(), file_info->Password);
@@ -44,15 +44,9 @@ namespace ved
 
 	void driver_disk::mount_disk(POPEN_FILE_INFORMATION open_file) const
 	{
-		size_t number_device{};
-				
-		number_device = this->main_device_.send_ctl_code(IOCTL_GET_FREE_DEVICE);
-		if (!number_device)
-		{
-			number_device = this->main_device_.send_ctl_code(IOCTL_FILE_ADD_DEVICE);
-		}
-
-		const std::wstring path_new_device = DEVICE_DIR_NAME + std::to_wstring(number_device);
+		
+		const auto number_device = this->get_free_number_device();
+		const auto path_new_device = DEVICE_DIR_NAME + std::to_wstring(number_device);
 				
 		ved::define_device_manager define_manager(open_file->DriveLetter);
 		
@@ -61,7 +55,7 @@ namespace ved
 			throw ved::driver_exception(L"Error check_define!",::GetLastError());
 		}
 		
-		define_manager.add_device(path_new_device);
+		define_manager.link_device(path_new_device);
 		
 		try
 		{
@@ -85,6 +79,53 @@ namespace ved
 
 	
 	}
+
+	void driver_disk::create_file_disk(POPEN_FILE_INFORMATION open_file) const
+	{
+
+		const auto number_device = this->get_free_number_device();
+		const auto path_new_device = DEVICE_DIR_NAME + std::to_wstring(number_device);
+		ved::define_device_manager manager('0');
+		
+		manager.link_device(path_new_device);
+
+		const auto new_device = manager.make_device();
+				
+		try
+		{
+			new_device.send_ctl_code(
+				IOCTL_FILE_DISK_OPEN_FILE,
+				open_file,
+				sizeof(_OPEN_FILE_INFORMATION) + open_file->FileNameLength * sizeof(WCHAR) + 7);
+			
+			new_device.send_ctl_code(IOCTL_FILE_DISK_CLOSE_FILE);
+			
+			manager.delete_define();
+		}
+		catch (...)
+		{
+
+			manager.delete_define();
+			throw;
+			
+		}
+			
+			
+	}
+
+	
+	size_t driver_disk::get_free_number_device(void)const
+	{
+		size_t number_device = this->main_device_.send_ctl_code(IOCTL_GET_FREE_DEVICE);
+		
+		if (!number_device)
+		{
+			number_device = this->main_device_.send_ctl_code(IOCTL_FILE_ADD_DEVICE);
+		}
+
+		return number_device;
+	}
+	
 
 	void driver_disk::un_mount_disk(const WCHAR letter)
 	{

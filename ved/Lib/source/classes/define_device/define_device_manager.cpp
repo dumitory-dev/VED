@@ -2,7 +2,7 @@
 
 namespace  ved
 {
-	void define_device_manager::add_device(const std::wstring& path_device)
+	void define_device_manager::link_device(const std::wstring& path_device)
 	{
 		if (!::DefineDosDevice(
 			DDD_RAW_TARGET_PATH,
