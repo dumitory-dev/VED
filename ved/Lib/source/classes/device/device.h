@@ -66,6 +66,11 @@ namespace ved
 			return this->h_driver_->read(data, lp);
 		}
 
+		auto is_connect(void) const noexcept
+		{
+			return static_cast<bool>(this->h_driver_.get());
+		}
+
 
 	private:
 		std::wstring path_driver_{};

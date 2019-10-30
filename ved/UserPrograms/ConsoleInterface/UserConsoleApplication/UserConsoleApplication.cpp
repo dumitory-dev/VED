@@ -3,7 +3,9 @@ int main(void)
 {
 	try
 	{
+		
 		ved::driver_disk & driver = ved::driver_disk::get_instance();
+		
 	}
 	catch (...)
 	{
