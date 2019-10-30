@@ -31,13 +31,13 @@ namespace ved
 			size_data_in,
 			data_out,
 			size_data_out,
-			static_cast<LPDWORD>(&ret),
+			&ret,
 			nullptr
 		))
 		{
-			throw ved::driver_exception(L"Error DeviceIoControl!", GetLastError());
+			throw ved::driver_exception(L"Error DeviceIoControl!", ret);
 		}
-
+		
 		return ret;
 	}
 }

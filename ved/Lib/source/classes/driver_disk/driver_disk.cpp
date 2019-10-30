@@ -82,35 +82,12 @@ namespace ved
 
 	void driver_disk::create_file_disk(POPEN_FILE_INFORMATION open_file) const
 	{
-
-		const auto number_device = this->get_free_number_device();
-		const auto path_new_device = DEVICE_DIR_NAME + std::to_wstring(number_device);
-		ved::define_device_manager manager('0');
 		
-		manager.link_device(path_new_device);
-
-		const auto new_device = manager.make_device();
-				
-		try
-		{
-			new_device.send_ctl_code(
-				IOCTL_FILE_DISK_OPEN_FILE,
-				open_file,
-				sizeof(_OPEN_FILE_INFORMATION) + open_file->FileNameLength * sizeof(WCHAR) + 7);
-			
-			new_device.send_ctl_code(IOCTL_FILE_DISK_CLOSE_FILE);
-			
-			manager.delete_define();
-		}
-		catch (...)
-		{
-
-			manager.delete_define();
-			throw;
-			
-		}
-			
-			
+		this->main_device_.send_ctl_code(
+			IOCTL_FILE_DISK_OPEN_FILE,
+			open_file,
+			sizeof(_OPEN_FILE_INFORMATION) + open_file->FileNameLength * sizeof(WCHAR) + 7);
+		
 	}
 
 	

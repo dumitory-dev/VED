@@ -11,7 +11,7 @@ VISUAl STUDIO 2019 COMMUNITY
 NTSTATUS CreateDevice(struct _DRIVER_OBJECT* DriverObject, ULONG uNumber, DEVICE_TYPE DeviceType);
 PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject);
 
-NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp);
+NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOpen);
 NTSTATUS CloseFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp);
 
 DRIVER_UNLOAD Unload;
@@ -44,14 +44,15 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 
 	NTSTATUS status = IoCreateDevice(
 		DriverObject,
-		0,
+		sizeof(DEVICE_EXTENSION),
 		&g_usDeviceName,
 		FILE_DEVICE_UNKNOWN,
 		FILE_DEVICE_SECURE_OPEN,
 		FALSE,
 		&g_pDeviceObject
 	);
-
+		
+	
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrint("VED: Failed create device!\n\r");
@@ -180,8 +181,7 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 				pIrp->IoStatus.Information = index;
 				IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 				return pIrp->IoStatus.Status;
-
-
+				
 
 			};
 
@@ -194,6 +194,33 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 	}
 	case IOCTL_FILE_DISK_OPEN_FILE:
 	{
+#ifdef  DBG
+			DbgBreakPoint();
+#endif
+
+		if (pDeviceObject == g_pDeviceObject)
+		{
+			
+			pIrp->IoStatus.Status = CreateFile(g_pDeviceObject, pIrp, FALSE);
+			if (pIrp->IoStatus.Status != STATUS_SUCCESS)
+			{
+				status = pIrp->IoStatus.Status;
+				//DbgBreakPoint();
+				break;
+			}
+
+			pIrp->IoStatus.Status = CloseFile(g_pDeviceObject, pIrp);
+			if (pIrp->IoStatus.Status != STATUS_SUCCESS)
+			{
+				status = pIrp->IoStatus.Status;
+				//DbgBreakPoint();
+				break;
+			}
+					
+			status = STATUS_SUCCESS;
+		    break;
+		}
+			
 		if (pDeviceExtension->media_in_device)
 		{
 			status = STATUS_INVALID_DEVICE_REQUEST;
@@ -1077,7 +1104,7 @@ VOID Thread(IN PVOID pContext)
 				{
 
 				case IOCTL_FILE_DISK_OPEN_FILE:
-					pIrp->IoStatus.Status = OpenFile(pDeviceObject, pIrp);
+					pIrp->IoStatus.Status = CreateFile(pDeviceObject, pIrp, TRUE);
 					break;
 
 				case IOCTL_FILE_DISK_CLOSE_FILE:
@@ -1109,7 +1136,7 @@ VOID Thread(IN PVOID pContext)
 
 }
 
-NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
+NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOpen)
 {
 	PAGED_CODE();
 	ASSERT(pDeviceObject != NULL);
@@ -1180,7 +1207,10 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 		NULL,
 		NULL
 	);
-
+	if (!bIsOpen)
+	{
+		goto CreateFile;
+	}
 	status = ZwCreateFile(
 		&pDeviceExtension->file_handle,
 		GENERIC_READ | GENERIC_WRITE,
@@ -1280,6 +1310,9 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 			pIrp->IoStatus.Information = 0;
 			return STATUS_NO_SUCH_FILE;
 		}
+
+		CreateFile:
+		
 		status = ZwCreateFile(
 			&pDeviceExtension->file_handle,
 			GENERIC_READ | GENERIC_WRITE,
@@ -1309,6 +1342,21 @@ NTSTATUS OpenFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 			return status;
 		}
 
+		if (pIrp->IoStatus.Information == FILE_OPENED)
+		{
+
+			DbgPrint("VED: File %.*S  file now is exist.\n\r",
+				usFileName.Length / 2,
+				usFileName.Buffer);
+			ExFreePool(pDeviceExtension->file_name.Buffer);
+			ExFreePool(pDeviceExtension->password.Buffer);
+			RtlFreeUnicodeString(&usFileName);
+			pIrp->IoStatus.Information = 0x50;
+			ZwClose(pDeviceExtension->file_handle);
+			return STATUS_FILE_NOT_SUPPORTED;
+			
+		}
+		
 		if (pIrp->IoStatus.Information == FILE_CREATED)
 		{
 
