@@ -1353,7 +1353,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			RtlFreeUnicodeString(&usFileName);
 			pIrp->IoStatus.Information = 0x50;
 			ZwClose(pDeviceExtension->file_handle);
-			return STATUS_FILE_NOT_SUPPORTED;
+			return STATUS_SUCCESS;
 			
 		}
 		

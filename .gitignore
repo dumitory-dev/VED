@@ -154,6 +154,11 @@ PublishScripts/
 # NuGet Packages
 *.nupkg
 
+
+*.Degub
+*.Release
+*.qmake.stash
+
 # except build/, which is used as an MSBuild target.
 !**/packages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
@@ -169,6 +174,8 @@ csx/
 # Microsoft Azure Emulator
 ecf/
 rcf/
+
+build-GUI-Desktop_Qt_5_10_1_MinGW_32bit-Debug/
 
 # Windows Store app package directories and files
 AppPackages/
