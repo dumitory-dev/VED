@@ -22,6 +22,8 @@ namespace ved
 		void* data_out,
 	    const DWORD size_data_out) const
 	{
+
+		
 		DWORD ret = 0;
 
 		if (!::DeviceIoControl(
@@ -35,7 +37,8 @@ namespace ved
 			nullptr
 		))
 		{
-			throw ved::driver_exception(L"Error DeviceIoControl!", ret);
+			std::cout<< ved::driver_exception::convert_nt_status_to_win32_error(GetLastError())<<std::endl;
+			throw ved::driver_exception(L"Error DeviceIoControl!", 2);
 		}
 		
 		return ret;

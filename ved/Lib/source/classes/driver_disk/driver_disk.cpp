@@ -1,8 +1,8 @@
 #include "driver_disk.h"
 namespace ved
 {
-	driver_disk::_OPEN_FILE_INFORMATION* driver_disk::_OPEN_FILE_INFORMATION::make(
-		const std::wstring& file_name, LARGE_INTEGER file_size, WCHAR drive_letter, const std::string& file_password)
+	std::unique_ptr<OPEN_FILE_INFORMATION> driver_disk::make_file_info(
+		const std::wstring& file_name, LARGE_INTEGER file_size, WCHAR drive_letter, const std::string& file_password, enum Crypt mode_crypt)
 	{
 		if (file_name.empty()
 			||
@@ -13,46 +13,42 @@ namespace ved
 		{
 			throw std::invalid_argument("Failed create_file_info! Invalid arguments!");
 		}
-	
-		_OPEN_FILE_INFORMATION* file_info{};
-		file_info = static_cast<_OPEN_FILE_INFORMATION*>(malloc(
-			sizeof(_OPEN_FILE_INFORMATION*) + file_name.length() * sizeof(WCHAR) + 7));
+		
+		std::unique_ptr<OPEN_FILE_INFORMATION> uptr_file_info = std::make_unique<OPEN_FILE_INFORMATION>();
 
-		if (file_info == nullptr)
+		if (uptr_file_info == nullptr)
 		{
 			throw std::runtime_error("Error malloc _OPEN_FILE_INFORMATION!");
 		}
+
 		
-		memset(
-			file_info,
-			0,
-			sizeof(_OPEN_FILE_INFORMATION*) + file_name.length() * sizeof(WCHAR) + 7
-		);
 
-		wcscpy(file_info->FileName, L"\\??\\");
-		wcscat(file_info->FileName, file_name.c_str());
+		wcscpy_s(uptr_file_info->FileName, L"\\??\\");
+		wcscat_s(uptr_file_info->FileName, file_name.c_str());
 
-		file_info->FileNameLength = static_cast<USHORT>(wcslen(file_info->FileName));
-		file_info->FileSize.QuadPart = file_size.QuadPart;
-		file_info->DriveLetter = drive_letter;
+		uptr_file_info->FileNameLength = static_cast<USHORT>(wcslen(uptr_file_info->FileName));
+		uptr_file_info->FileSize.QuadPart = file_size.QuadPart;
+		uptr_file_info->DriveLetter = drive_letter;
 
-		std::copy(file_password.cbegin(), file_password.cend(), file_info->Password);
-		file_info->PasswordLength = static_cast<USHORT>(file_password.length());
+		std::copy(file_password.cbegin(), file_password.cend(), uptr_file_info->Password);
+		uptr_file_info->PasswordLength = static_cast<USHORT>(file_password.length());
+		uptr_file_info->CryptMode = mode_crypt;
+		
 
-		return file_info;
+		return uptr_file_info;
 	}
 
 	void driver_disk::mount_disk(POPEN_FILE_INFORMATION open_file) const
 	{
 		
 		const auto number_device = this->get_free_number_device();
-		const auto path_new_device = DEVICE_DIR_NAME + std::to_wstring(number_device);
+		const auto path_new_device = DEVICE_NAME_PREFIX + std::to_wstring(number_device);
 				
 		ved::define_device_manager define_manager(open_file->DriveLetter);
 		
 		if (define_manager.check_define())
 		{
-			throw ved::driver_exception(L"Error check_define!",::GetLastError());
+			throw std::runtime_error("Error check_define! Letter is exist!");
 		}
 		
 		define_manager.link_device(path_new_device);
@@ -80,13 +76,19 @@ namespace ved
 	
 	}
 
-	void driver_disk::create_file_disk(POPEN_FILE_INFORMATION open_file) const
+	void driver_disk::create_file_disk(const std::unique_ptr<OPEN_FILE_INFORMATION> & open_file) const
 	{
 		
-		this->main_device_.send_ctl_code(
+		auto ret = this->main_device_.send_ctl_code(
 			IOCTL_FILE_DISK_OPEN_FILE,
-			open_file,
+			open_file.get(),
 			sizeof(_OPEN_FILE_INFORMATION) + open_file->FileNameLength * sizeof(WCHAR) + 7);
+
+
+		if (ret != 0)
+		{
+			 throw ved::c_win_api_exception(L"Error create file disk!", ret);
+		}
 		
 	}
 

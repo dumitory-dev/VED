@@ -2,11 +2,11 @@
 #include "../headers/constants.h"
 
 
-typedef unsigned int uint32_t ;
+typedef __int32 uint32_t ;
 
 typedef unsigned char BYTE;
 
-void Rc4Crypt(char *key,size_t len,char * data,size_t data_len)
+void Rc4Crypt(PCHAR key,size_t len,PCHAR data,size_t data_len)
 {
 	char S[256];
     unsigned int i,j;
@@ -155,7 +155,10 @@ NTSTATUS DecryptEncrypt(UCHAR * puDataPassword, size_t uSizePassword, UCHAR * pu
 		authInfo.cbMacContext = authTagLengths.dwMaxLength;
 		authInfo.pbMacContext = puMacContext;
 		authInfo.dwFlags = BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG;
-				
+
+#pragma warning(push)
+
+#pragma warning(disable:28193)
 		status = BCryptDecrypt
 		(
 			keyHandle,
@@ -166,6 +169,8 @@ NTSTATUS DecryptEncrypt(UCHAR * puDataPassword, size_t uSizePassword, UCHAR * pu
 			&bytesDone, 0
 		);
 
+#pragma warning(pop)
+		
 
 		ExFreePool(puMacContext);
 		ExFreePool(puContextIV);

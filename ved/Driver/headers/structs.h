@@ -1,16 +1,10 @@
 #pragma once
 #include "libraries.h"
 #include "constants.h"
-#include  "crypt.h"
+#include "crypt.h"
+#include "open_file_info.h"
 
-typedef struct _OPEN_FILE_INFORMATION {
-	LARGE_INTEGER	FileSize;
-	WCHAR			DriveLetter;
-	USHORT			FileNameLength;
-	USHORT			PasswordLength;
-	CHAR			Password[MAX_PASSWORD_SIZE];
-	WCHAR			FileName[1];
-}OPEN_FILE_INFORMATION, *POPEN_FILE_INFORMATION;
+
 
 typedef struct _DEVICE_EXTENSION {
     BOOLEAN                     media_in_device;
@@ -26,6 +20,7 @@ typedef struct _DEVICE_EXTENSION {
     KEVENT                      request_event;
     PVOID                       thread_pointer;
     BOOLEAN                     terminate_thread;
+	enum Crypt					crypt_mode;
 	
 
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;

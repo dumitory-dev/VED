@@ -42,7 +42,7 @@ namespace ved
 		{
 			if (path.empty())
 			{
-				throw ved::driver_exception(L"Path device is empty!", GetLastError());
+				throw std::runtime_error("Path device is empty!");
 			}
 
 			this->path_driver_ = path;

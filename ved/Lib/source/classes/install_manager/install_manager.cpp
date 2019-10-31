@@ -12,7 +12,7 @@ namespace ved
 
 		if (!*h)
 		{
-			throw ved::driver_exception(L"OpenSCManager error!", ::GetLastError());
+			throw ved::service_exception(L"OpenSCManager error!", ::GetLastError());
 		}
 
 		return h;
@@ -42,7 +42,7 @@ namespace ved
 			const auto error_code = ::GetLastError();
 			if (error_code != ERROR_SERVICE_EXISTS)
 			{
-				throw ved::driver_exception(L"Error CreateService!", ::GetLastError());
+				throw ved::service_exception(L"Error CreateService!", ::GetLastError());
 			}
 		}
 	}
@@ -58,7 +58,7 @@ namespace ved
 
 		if (!*h)
 		{
-			throw ved::driver_exception(L"Error OpenService!", ::GetLastError());
+			throw ved::service_exception(L"Error OpenService!", ::GetLastError());
 		}
 
 		return h;
@@ -82,7 +82,7 @@ namespace ved
 			const auto error = ::GetLastError();
 			if (error != ERROR_SERVICE_ALREADY_RUNNING)
 			{
-				throw ved::driver_exception(L"Error StartService!", GetLastError());
+				throw ved::service_exception(L"Error StartService!", GetLastError());
 			}
 		}
 	}
@@ -103,7 +103,7 @@ namespace ved
 			&status
 		))
 		{
-			throw ved::driver_exception(L"Error ControlService!", ::GetLastError());
+			throw ved::service_exception(L"Error ControlService!", ::GetLastError());
 		}
 	}
 
@@ -117,7 +117,7 @@ namespace ved
 
 		if (!::DeleteService(*h))
 		{
-			throw ved::driver_exception(L"Error DeleteService!", ::GetLastError());
+			throw ved::service_exception(L"Error DeleteService!", ::GetLastError());
 		}
 	}
 }

@@ -9,7 +9,7 @@ namespace  ved
 			&this->letter_[4],
 			path_device.c_str()))
 		{
-			throw ved::driver_exception(L"Error DefineDosDevice!(add)", ::GetLastError());
+			throw ved::c_win_api_exception(L"Error DefineDosDevice!(add)", ::GetLastError());
 		}
 	}
 
@@ -21,7 +21,7 @@ namespace  ved
 			nullptr
 		))
 		{
-			throw ved::driver_exception(L"Error DefineDosDevice(delete)!", ::GetLastError());
+			throw ved::c_win_api_exception(L"Error DefineDosDevice(delete)!", ::GetLastError());
 		}
 	}
 

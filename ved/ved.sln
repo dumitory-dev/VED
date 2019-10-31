@@ -15,6 +15,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{62C16533
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestLib", "Tests\TestLib\TestLib.vcxproj", "{BB117746-AEE7-475F-B5D1-AD40D1A2AB4A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "general_headers", "general_headers", "{E724A762-C3C8-493F-9C48-94129AA85842}"
+	ProjectSection(SolutionItems) = preProject
+		general_headers\constant.h = general_headers\constant.h
+		general_headers\open_file_info.h = general_headers\open_file_info.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
