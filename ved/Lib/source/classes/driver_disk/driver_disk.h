@@ -44,7 +44,7 @@ namespace ved
 		}
 
 		
-		void mount_disk(POPEN_FILE_INFORMATION open_file) const;
+		void mount_disk(const std::unique_ptr<OPEN_FILE_INFORMATION> & open_file) const;
 
 		void create_file_disk(const std::unique_ptr<OPEN_FILE_INFORMATION> & open_file) const;
 

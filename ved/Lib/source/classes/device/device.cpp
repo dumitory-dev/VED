@@ -37,8 +37,9 @@ namespace ved
 			nullptr
 		))
 		{
-			std::cout<< ved::driver_exception::convert_nt_status_to_win32_error(GetLastError())<<std::endl;
-			throw ved::driver_exception(L"Error DeviceIoControl!", 2);
+
+		
+			throw ved::driver_exception(L"Error DeviceIoControl!", GetLastError());
 		}
 		
 		return ret;

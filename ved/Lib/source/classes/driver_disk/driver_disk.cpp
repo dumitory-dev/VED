@@ -38,7 +38,7 @@ namespace ved
 		return uptr_file_info;
 	}
 
-	void driver_disk::mount_disk(POPEN_FILE_INFORMATION open_file) const
+	void driver_disk::mount_disk(const std::unique_ptr<OPEN_FILE_INFORMATION> & open_file) const
 	{
 		
 		const auto number_device = this->get_free_number_device();
@@ -59,7 +59,7 @@ namespace ved
 			define_device.connect();
 			define_device.send_ctl_code(
 				IOCTL_FILE_DISK_OPEN_FILE,
-				open_file,
+				open_file.get(),
 				sizeof(_OPEN_FILE_INFORMATION) + open_file->FileNameLength * sizeof(WCHAR) + 7);
 			define_manager.report_define();
 		
@@ -67,6 +67,7 @@ namespace ved
 		}
 		catch (...)
 		{
+			std::wcout<<"Error mount disk!"<<std::endl;
 			define_manager.delete_define();
 			define_manager.report_delete_define();
 			

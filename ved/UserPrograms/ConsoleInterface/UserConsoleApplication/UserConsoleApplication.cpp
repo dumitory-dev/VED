@@ -1,18 +1,28 @@
 ﻿#include "classes/driver_disk/driver_disk.h"
+#include "classes/install_manager/install_manager.h"
 
 int main(void)
 {
 	try
 	{
+		//const std::wstring device_name = L"TestMyDriver!";
+		//const std::wstring path = L"%SystemRoot%\\System32\\Drivers\\Driver.sys";
 
+		//ved::install_manager::install_service(path, device_name);
+		//ved::install_manager::load_service(device_name);
 		auto & disk = ved::driver_disk::get_instance();
 		disk.connect_to_main_device(DEVICE_SYM_LINK);
 
 		LARGE_INTEGER size;
-		size.QuadPart = 100 * 1024 * 1024;
-		const auto ptr = ved::driver_disk::make_file_info(L"C:\\test.img",size,L'K',"1230000000000000",Crypt::RC4);
-		disk.create_file_disk(ptr);
+		size.QuadPart = 10 * 1024 * 1024;
+		 auto ptr = ved::driver_disk::make_file_info(L"C:\\test4.img",size,L'J',"1230000000000000",Crypt::RC4);
 				
+		disk.create_file_disk(ptr);
+		ptr->CryptMode = Crypt::CryptPrev;
+		disk.mount_disk(ptr);
+
+		//ved::define_device_manager::make_path_letter(L'K');
+		
 	}
 
 	catch (const ved::driver_exception & error)

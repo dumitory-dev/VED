@@ -217,8 +217,7 @@ namespace ved
 			if (!c_exception::m_ulCode)
 				return c_exception::m_wsMessage;
 
-			c_exception::m_ulCode = driver_exception::convert_nt_status_to_win32_error(c_exception::m_ulCode);
-
+		
 			LPVOID lp_msg_buf{};
 
 			if (!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -228,7 +227,23 @@ namespace ved
 				reinterpret_cast<LPWSTR>(&lp_msg_buf),
 				{},
 				{}))
-				return c_exception::m_wsMessage;
+			{
+					
+					c_exception::m_ulCode = driver_exception::convert_nt_status_to_win32_error(c_exception::m_ulCode);
+
+					if (!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                               {},
+                               c_exception::m_ulCode,
+                               MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+                               reinterpret_cast<LPWSTR>(&lp_msg_buf),
+                               {},
+                               {}))
+					{
+						return c_exception::m_wsMessage;
+					}
+
+			}
+				
 
 			std::wostringstream wos{};
 			wos << c_exception::m_wsMessage << std::endl;

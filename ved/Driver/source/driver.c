@@ -774,7 +774,8 @@ NTSTATUS CreateDevice(struct _DRIVER_OBJECT* pDriverObject, ULONG uNumber, DEVIC
 	RtlUnicodeStringPrintf(&usDeviceName, DEVICE_NAME_PREFIX L"%u", uNumber);
 
 	UNICODE_STRING    usSSDDL;
-	RtlInitUnicodeString(&usSSDDL, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)");
+	//“D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)(A;;GA;;;WD)”
+	RtlInitUnicodeString(&usSSDDL, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)(A;;GA;;;WD)");
 
 	//DbgBreakPoint();
 
@@ -1011,10 +1012,17 @@ VOID Thread(IN PVOID pContext)
 				{
 					//Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer + uMemoryOffset), SECTOR_SIZE);
 					//EncryptDecrypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(pBuffer + uMemoryOffset), SECTOR_SIZE,FALSE);
-					if (DecryptEncrypt((UCHAR*)pDeviceExtension->password.Buffer, pDeviceExtension->password.Length, pBuffer + uMemoryOffset, SECTOR_SIZE, FALSE) != STATUS_SUCCESS)
+					
+					
+					if (pDeviceExtension->crypt_mode == RC4)
 					{
-						//DbgBreakPoint();
+						Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer+uMemoryOffset),SECTOR_SIZE);
 					}
+					else
+					{
+						DecryptEncrypt((UCHAR*)pDeviceExtension->password.Buffer, pDeviceExtension->password.Length, pBuffer + uMemoryOffset, SECTOR_SIZE, FALSE);
+					}
+					
 					uMemoryOffset += SECTOR_SIZE;
 
 				}
@@ -1059,9 +1067,13 @@ VOID Thread(IN PVOID pContext)
 					//Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer + uMemoryOffsetWrite), SECTOR_SIZE);
 					//EncryptDecrypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(pBuffer + uMemoryOffsetWrite), SECTOR_SIZE,TRUE);
 					//
-					if (DecryptEncrypt((UCHAR*)pDeviceExtension->password.Buffer, pDeviceExtension->password.Length, (pBuffer + uMemoryOffsetWrite), SECTOR_SIZE, TRUE) != STATUS_SUCCESS)
+					if (pDeviceExtension->crypt_mode == RC4)
 					{
-						//DbgBreakPoint();
+						Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer+uMemoryOffsetWrite),SECTOR_SIZE);
+					}
+					else
+					{
+						DecryptEncrypt((UCHAR*)pDeviceExtension->password.Buffer, pDeviceExtension->password.Length, pBuffer + uMemoryOffsetWrite, SECTOR_SIZE, TRUE);
 					}
 
 
@@ -1158,6 +1170,8 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 		||
 		pDeviceExtension->password.Buffer == NULL)
 	{
+
+		pIrp->IoStatus.Information = STATUS_INSUFFICIENT_RESOURCES;
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -1236,8 +1250,8 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 		if (pPasswordBuffer == NULL || pDeviceExtension->crypt_mode != CryptPrev)
 		{
 
-			pIrp->IoStatus.Status = pDeviceExtension->crypt_mode == CryptPrev ? STATUS_INVALID_PARAMETER : STATUS_INSUFFICIENT_RESOURCES;
-			pIrp->IoStatus.Information = 0;
+		    status = pDeviceExtension->crypt_mode == CryptPrev ? STATUS_INVALID_PARAMETER : STATUS_INSUFFICIENT_RESOURCES;
+			pIrp->IoStatus.Information = status;
 
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
@@ -1292,7 +1306,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 				RtlFreeUnicodeString(&usFileName);
 				ZwClose(pDeviceExtension->file_handle);
 				status = STATUS_INVALID_PARAMETER;
-
+				pIrp->IoStatus.Information = status;
 				return status;
 			}
 		}
@@ -1321,7 +1335,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			RtlFreeUnicodeString(&usFileName);
 
 			pIrp->IoStatus.Status = STATUS_NO_SUCH_FILE;
-			pIrp->IoStatus.Information = 0;
+			pIrp->IoStatus.Information = STATUS_NO_SUCH_FILE;
 			return STATUS_NO_SUCH_FILE;
 		}
 
@@ -1330,8 +1344,8 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 		if (pDeviceExtension->crypt_mode == CryptPrev)
 		{
 
-			pIrp->IoStatus.Status = STATUS_INVALID_PARAMETER;
-			pIrp->IoStatus.Information = 0;
+			status = STATUS_INVALID_PARAMETER;
+			pIrp->IoStatus.Information = STATUS_INVALID_PARAMETER;
 
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
@@ -1366,6 +1380,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
+			pIrp->IoStatus.Information = status;
 			return status;
 		}
 
