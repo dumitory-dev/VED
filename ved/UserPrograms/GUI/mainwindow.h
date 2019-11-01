@@ -15,19 +15,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-
 private slots:
-    void on_CreateNew_clicked();
-
-    void on_buttonBox_accepted();
-
-    void on_buttonBox_rejected();
-
-    void on_PathButton_clicked();
-
-    void on_Add_clicked();
-
-    void on_Remove_clicked();
+    void on_pushButton_clicked();
 
 private:
     Ui::MainWindow *ui;
