@@ -54,10 +54,7 @@ namespace ved
 	private:
 		driver_disk(void) = default;
 		~driver_disk(void) = default;
-
-
-	
-
+		
 		[[nodiscard]] size_t get_free_number_device(void)const;
 
 		std::wstring path_main_device_{};

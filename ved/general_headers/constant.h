@@ -1,8 +1,5 @@
 #pragma once
 
-
-
-
 #define DEVICE_BASE_NAME	L"\\FileDisk"
 #define DEVICE_DIR_NAME		L"\\Device"	DEVICE_BASE_NAME
 #define DEVICE_NAME_PREFIX	DEVICE_DIR_NAME	DEVICE_BASE_NAME

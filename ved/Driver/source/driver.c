@@ -1171,7 +1171,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 		pDeviceExtension->password.Buffer == NULL)
 	{
 
-		pIrp->IoStatus.Information = STATUS_INSUFFICIENT_RESOURCES;
+		
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -1242,17 +1242,28 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 
 	if (NT_SUCCESS(status))
 	{
-		PUCHAR pPasswordBuffer = (PUCHAR)ExAllocatePoolWithTag(
+		if ( pDeviceExtension->crypt_mode != CryptPrev)
+		{
+			status = STATUS_INVALID_PARAMETER;
+			
+			ExFreePool(pDeviceExtension->file_name.Buffer);
+			ExFreePool(pDeviceExtension->password.Buffer);
+			RtlFreeUnicodeString(&usFileName);
+			ZwClose(pDeviceExtension->file_handle);
+			return status;
+				
+		}
+		const PUCHAR pPasswordBuffer = (PUCHAR)ExAllocatePoolWithTag(
 			PagedPool,
 			MAX_PASSWORD_SIZE+CRYPT_OFFSET,
 			FILE_DISK_POOL_TAG);
 
-		if (pPasswordBuffer == NULL || pDeviceExtension->crypt_mode != CryptPrev)
+				
+		if (pPasswordBuffer == NULL)
 		{
 
-		    status = pDeviceExtension->crypt_mode == CryptPrev ? STATUS_INVALID_PARAMETER : STATUS_INSUFFICIENT_RESOURCES;
-			pIrp->IoStatus.Information = status;
-
+		    status = STATUS_INSUFFICIENT_RESOURCES;
+			
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
@@ -1306,7 +1317,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 				RtlFreeUnicodeString(&usFileName);
 				ZwClose(pDeviceExtension->file_handle);
 				status = STATUS_INVALID_PARAMETER;
-				pIrp->IoStatus.Information = status;
+				
 				return status;
 			}
 		}
@@ -1335,7 +1346,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			RtlFreeUnicodeString(&usFileName);
 
 			pIrp->IoStatus.Status = STATUS_NO_SUCH_FILE;
-			pIrp->IoStatus.Information = STATUS_NO_SUCH_FILE;
+			
 			return STATUS_NO_SUCH_FILE;
 		}
 
@@ -1345,8 +1356,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 		{
 
 			status = STATUS_INVALID_PARAMETER;
-			pIrp->IoStatus.Information = STATUS_INVALID_PARAMETER;
-
+			
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
@@ -1469,7 +1479,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			}
 			memset(pPasswordBuffer, 0, PASSWORD_OFFSET);
 
-			pPasswordBuffer[CRYPT_OFFSET -1] = (int)pDeviceExtension->crypt_mode;
+			pPasswordBuffer[CRYPT_OFFSET -1] = (char)pDeviceExtension->crypt_mode;
 
 			for (int i = CRYPT_OFFSET; i <= pDeviceExtension->password.Length; ++i)
 			{
@@ -1520,6 +1530,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			}
 
 			DbgPrint("VED: Password was be written!\n\r");
+				
 			ExFreePool(pPasswordBuffer);
 
 		}
