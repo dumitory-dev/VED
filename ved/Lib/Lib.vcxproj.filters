@@ -37,6 +37,9 @@
     <Filter Include="source\classes\ved_manager">
       <UniqueIdentifier>{99d0d3ee-d265-4f38-a4d8-f896bf3d7d51}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\classes\hash">
+      <UniqueIdentifier>{fff1b8ef-a9af-4de5-a634-9759e87c05aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="global_headers\pch.cpp">
@@ -62,6 +65,9 @@
     </ClCompile>
     <ClCompile Include="source\classes\ved_manager\ved_manager.cpp">
       <Filter>source\classes\ved_manager</Filter>
+    </ClCompile>
+    <ClCompile Include="source\classes\hash\hash.cpp">
+      <Filter>source\classes\hash</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -97,6 +103,9 @@
     </ClInclude>
     <ClInclude Include="source\interface\i_ved_manager.h">
       <Filter>source\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="source\classes\hash\hash.h">
+      <Filter>source\classes\hash</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

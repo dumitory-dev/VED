@@ -6,11 +6,11 @@ namespace ved
 		const std::string& password,
 		WCHAR letter)
 	{
-		this->connected();
-		
+	    this->connected();
+		const auto hash_password = this->make_md5_hash(password);
 		LARGE_INTEGER size;
 		size.QuadPart = 0;
-		const auto disk_info = ved::driver_disk::make_file_info(path,size,letter,password,Crypt::CryptPrev);
+		const auto disk_info = ved::driver_disk::make_file_info(path,size,letter,hash_password,Crypt::CryptPrev);
 		this->driver_.mount_disk(disk_info);
 	}
 
@@ -22,9 +22,10 @@ namespace ved
 		const Crypt mode)
 	{
 		this->connected();
+		const auto hash_password = this->make_md5_hash(password);
 		LARGE_INTEGER size_file;
 		size_file.QuadPart = size;
-		const auto disk_info = ved::driver_disk::make_file_info(path,size_file,letter,password,mode);
+		const auto disk_info = ved::driver_disk::make_file_info(path,size_file,letter,hash_password,mode);
 		this->driver_.mount_disk(disk_info);
 		
 	}
@@ -37,9 +38,10 @@ namespace ved
 		const Crypt mode)
 	{
 		this->connected();
+		const auto hash_password = this->make_md5_hash(password);
 		LARGE_INTEGER size_file;
 		size_file.QuadPart = size;
-		const auto disk_info = ved::driver_disk::make_file_info(path,size_file,L' ',password,mode);
+		const auto disk_info = ved::driver_disk::make_file_info(path,size_file,L' ',hash_password,mode);
 		this->driver_.create_file_disk(disk_info);
 		
 		
@@ -65,6 +67,14 @@ namespace ved
 		
 		ved::install_manager::unload_service(device_name);
 		ved::install_manager::uninstall_service(device_name);
+		
+	}
+
+	std::string ved_manager::make_md5_hash(const std::string& password) const
+	{
+		auto hash = this->hash_convert_.get_hash({password.cbegin(),password.cend()});
+		hash.resize(MAX_PASSWORD_SIZE);
+		return hash;
 		
 	}
 }

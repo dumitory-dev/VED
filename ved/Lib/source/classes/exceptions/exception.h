@@ -104,7 +104,7 @@ namespace ved
 
 	};
 
-	class c_convert_exception final : public c_win_api_exception
+	class c_hash_exception final : public c_win_api_exception
 	{
 
 	public:

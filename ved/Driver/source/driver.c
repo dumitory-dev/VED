@@ -41,8 +41,18 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		NULL,
 		NULL
 	);
+	
+	NTSTATUS status = ZwCreateDirectoryObject(
+		&g_pDirHandle,
+		DIRECTORY_ALL_ACCESS,
+		&ObjectAttributes);
 
-	NTSTATUS status = IoCreateDevice(
+	if (!NT_SUCCESS(status))
+	{
+		return status;
+	}
+	
+	status = IoCreateDevice(
 		DriverObject,
 		sizeof(DEVICE_EXTENSION),
 		&g_usDeviceName,
@@ -51,7 +61,6 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		FALSE,
 		&g_pDeviceObject
 	);
-
 
 	if (!NT_SUCCESS(status))
 	{
@@ -69,15 +78,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		return status;
 	}
 
-	status = ZwCreateDirectoryObject(
-		&g_pDirHandle,
-		DIRECTORY_ALL_ACCESS,
-		&ObjectAttributes);
-
-	if (!NT_SUCCESS(status))
-	{
-		return status;
-	}
+	
 
 	/*
 	 * A temporary object has a name only as long as its handle count is greater than zero.
@@ -165,12 +166,14 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 
 			while (pDeviceObject_ != NULL)
 			{
-				if ((PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension == NULL)
+				
+				PDEVICE_EXTENSION tmp = (PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension;
+				if (tmp == NULL)
 				{
 					break;
 				}
 
-				if (((PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension)->media_in_device)
+				if (tmp->media_in_device)
 				{
 					pDeviceObject_ = pDeviceObject->NextDevice;
 					++index;
@@ -1631,6 +1634,9 @@ NTSTATUS CloseFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
 	ExFreePool(pDeviceExtension->file_name.Buffer);
 	ExFreePool(pDeviceExtension->password.Buffer);
+#ifdef DBG
+	DbgBreakPoint();
+#endif
 
 
 	ZwClose(pDeviceExtension->file_handle);

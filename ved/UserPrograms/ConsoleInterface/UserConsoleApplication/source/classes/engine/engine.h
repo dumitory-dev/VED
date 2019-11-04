@@ -34,16 +34,15 @@ namespace  ved
 		}
 
 		void execute(void);
-
-		
+				
 	private:
 	    void set_arguments(void);
-
-
+		
 		void mount(void);
 		void create_and_mount(void);
 		void un_mount(void);
-		void run_driver(void);
+		void create_file(void);
+		void start_driver(void);
 		void stop_driver(void) const;
 		void help(void) const;
 		
@@ -51,7 +50,8 @@ namespace  ved
 			{L"-mount",&engine::mount},
 			{L"-camount",&engine::create_and_mount},
 			{L"-unmount",&engine::un_mount},
-			{L"-start",&engine::run_driver},
+			{L"-create",&engine::create_file},
+			{L"-start",&engine::start_driver},
 			{L"-stop",&engine::stop_driver},
 			{L"-help",&engine::help}
 		};

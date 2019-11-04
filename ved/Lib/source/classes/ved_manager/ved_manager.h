@@ -2,6 +2,7 @@
 #include "../../interface/i_ved_manager.h"
 #include "../Lib/source/classes/driver_disk/driver_disk.h"
 #include "../../classes/install_manager/install_manager.h"
+#include "../hash/hash.h"
 
 namespace ved
 {
@@ -50,6 +51,8 @@ namespace ved
 		void stop_driver(const std::wstring& device_name = L"VEDriver") override;
 
 	private:
+
+		ved::hash hash_convert_{hash::type_hash::MD5};
 		ved::driver_disk driver_;
 
 		void connected(void)
@@ -59,6 +62,8 @@ namespace ved
 				this->driver_.connect_to_main_device();
 			}
 		}
+
+		std::string make_md5_hash(const std::string & password) const;
 	};
 	
 }
