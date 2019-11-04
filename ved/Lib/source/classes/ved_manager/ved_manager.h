@@ -1,0 +1,64 @@
+#pragma once
+#include "../../interface/i_ved_manager.h"
+#include "../Lib/source/classes/driver_disk/driver_disk.h"
+#include "../../classes/install_manager/install_manager.h"
+
+namespace ved
+{
+	
+	class ved_manager:public i_ved_manager
+	{
+	public:
+		
+		ved_manager(void):driver_(MAIN_DEVICE_SYM_LINK)
+		{
+			
+		}
+		
+		~ved_manager(void) = default;
+	    ved_manager(const ved_manager& other) = delete;
+		ved_manager(ved_manager&& other) noexcept = delete;
+		ved_manager& operator=(const ved_manager& other) = delete;
+		ved_manager& operator=(ved_manager&& other) noexcept = delete;
+		
+		void mount(
+			const std::wstring& path, 
+			const std::string& password,
+			WCHAR letter) override;
+		
+		void mount_ex(
+			const std::wstring& path, 
+			unsigned long long size, 
+			const std::string& password,
+			WCHAR letter,
+			Crypt mode) override;
+		
+		void create_file(
+			const std::wstring& path,
+			unsigned long long size, 
+			const std::string& password,
+			Crypt mode) override;
+		
+		void un_mount(WCHAR letter) override;
+
+		void run_driver(
+		    DWORD flag_startup = SERVICE_DEMAND_START,
+			const std::wstring & path_driver =  L"%SystemRoot%\\System32\\Drivers\\DriverVED.sys",
+			const std::wstring & name_service =  L"VEDriver"
+			) override;
+
+		void stop_driver(const std::wstring& device_name = L"VEDriver") override;
+
+	private:
+		ved::driver_disk driver_;
+
+		void connected(void)
+		{
+			if (!this->driver_.is_connected())
+			{
+				this->driver_.connect_to_main_device();
+			}
+		}
+	};
+	
+}

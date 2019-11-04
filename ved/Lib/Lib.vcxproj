@@ -29,6 +29,7 @@
     <ClCompile Include="source\classes\driver_disk\driver_disk.cpp" />
     <ClCompile Include="source\classes\file\file.cpp" />
     <ClCompile Include="source\classes\install_manager\install_manager.cpp" />
+    <ClCompile Include="source\classes\ved_manager\ved_manager.cpp" />
     <ClCompile Include="source\classes\wrap\wrap.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -39,8 +40,10 @@
     <ClInclude Include="source\classes\exceptions\exception.h" />
     <ClInclude Include="source\classes\file\file.h" />
     <ClInclude Include="source\classes\install_manager\install_manager.h" />
+    <ClInclude Include="source\classes\ved_manager\ved_manager.h" />
     <ClInclude Include="source\classes\wrap\wrap.h" />
     <ClInclude Include="source\interface\IFile.h" />
+    <ClInclude Include="source\interface\i_ved_manager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

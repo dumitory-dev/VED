@@ -34,6 +34,9 @@
     <Filter Include="source\classes\wrap">
       <UniqueIdentifier>{c2ce805a-f911-45f8-acc3-e6b7d4f3da46}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\classes\ved_manager">
+      <UniqueIdentifier>{99d0d3ee-d265-4f38-a4d8-f896bf3d7d51}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="global_headers\pch.cpp">
@@ -56,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="source\classes\wrap\wrap.cpp">
       <Filter>source\classes\wrap</Filter>
+    </ClCompile>
+    <ClCompile Include="source\classes\ved_manager\ved_manager.cpp">
+      <Filter>source\classes\ved_manager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -84,6 +90,12 @@
       <Filter>source\classes\wrap</Filter>
     </ClInclude>
     <ClInclude Include="source\interface\IFile.h">
+      <Filter>source\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="source\classes\ved_manager\ved_manager.h">
+      <Filter>source\classes\ved_manager</Filter>
+    </ClInclude>
+    <ClInclude Include="source\interface\i_ved_manager.h">
       <Filter>source\interface</Filter>
     </ClInclude>
   </ItemGroup>

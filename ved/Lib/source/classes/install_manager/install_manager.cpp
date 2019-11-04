@@ -18,7 +18,7 @@ namespace ved
 		return h;
 	}
 
-	void install_manager::install_service(const std::wstring& device_path, const std::wstring& device_name)
+	void install_manager::install_service(const std::wstring& device_path, const std::wstring& device_name, DWORD startup_flag)
 	{
 		const auto h = ved::service::handle::create(::CreateService(
 			*install_manager::open_manager(),
@@ -26,7 +26,7 @@ namespace ved
 			device_name.c_str(),
 			SERVICE_ALL_ACCESS,
 			SERVICE_KERNEL_DRIVER,
-			SERVICE_DEMAND_START,
+			startup_flag,
 			SERVICE_ERROR_NORMAL,
 			device_path.c_str(),
 			{},

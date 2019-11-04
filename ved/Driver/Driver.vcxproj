@@ -115,41 +115,49 @@
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)bin\$(ConfigurationType)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>vs19tmp\$(Configuration)\</IntDir>
+    <TargetName>$(TargetName.Replace(' ',''))VED</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)bin\$(ConfigurationType)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>vs19tmp\$(Configuration)\</IntDir>
+    <TargetName>$(TargetName.Replace(' ',''))VED</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)bin\$(ConfigurationType)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>vs19tmp\$(Configuration)\</IntDir>
+    <TargetName>$(TargetName.Replace(' ',''))VED</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)bin\$(ConfigurationType)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>vs19tmp\$(Configuration)\</IntDir>
+    <TargetName>$(TargetName.Replace(' ',''))VED</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>vs19tmp\$(Configuration)\</IntDir>
+    <TargetName>$(TargetName.Replace(' ',''))VED</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>vs19tmp\$(Configuration)\</IntDir>
+    <TargetName>$(TargetName.Replace(' ',''))VED</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>vs19tmp\$(Configuration)\</IntDir>
+    <TargetName>$(TargetName.Replace(' ',''))VED</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>vs19tmp\$(Configuration)\</IntDir>
+    <TargetName>$(TargetName.Replace(' ',''))VED</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

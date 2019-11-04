@@ -6,7 +6,7 @@ namespace ved
 	{
 		if (file_name.empty()
 			||
-			!file_size.QuadPart
+			(file_size.QuadPart != 0 && file_size.QuadPart < 10)
 			||
 			file_password.length() != 16
 			)

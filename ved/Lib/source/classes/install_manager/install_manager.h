@@ -20,7 +20,8 @@ namespace ved
 		
 		static void install_service(
 			const std::wstring& device_path,
-			const std::wstring& device_name);
+			const std::wstring& device_name,
+			DWORD startup_flag = SERVICE_DEMAND_START);
 		
 		static void load_service(const std::wstring& device_name);
 

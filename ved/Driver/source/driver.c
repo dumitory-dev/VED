@@ -1060,7 +1060,7 @@ VOID Thread(IN PVOID pContext)
 
 				RtlCopyMemory(pBuffer, pSystemBuffer, IoStack->Parameters.Write.Length);
 
-				uCountBlock = IoStack->Parameters.Read.Length / SECTOR_SIZE;
+				uCountBlock = IoStack->Parameters.Write.Length / SECTOR_SIZE;
 				ULONG uMemoryOffsetWrite = 0;
 				for (ULONG indexWrite = 0; indexWrite < uCountBlock; ++indexWrite)
 				{
@@ -1089,7 +1089,7 @@ VOID Thread(IN PVOID pContext)
 					j == pDeviceExtension->password.Length ? j = 0 : j;
 					pBuffer[i] ^= pDeviceExtension->password.Buffer[j];
 				}*/
-				IoStack->Parameters.Read.ByteOffset.QuadPart += PASSWORD_OFFSET;
+				IoStack->Parameters.Write.ByteOffset.QuadPart += PASSWORD_OFFSET;
 				if (ZwWriteFile(
 					pDeviceExtension->file_handle,
 					NULL,
@@ -1285,6 +1285,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 		);
 
 		const enum Crypt mode = pPasswordBuffer[CRYPT_OFFSET - 1];
+		pDeviceExtension->crypt_mode = mode;
 
 
 		if (mode == RC4)
@@ -1344,8 +1345,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
-
-			pIrp->IoStatus.Status = STATUS_NO_SUCH_FILE;
+					
 			
 			return STATUS_NO_SUCH_FILE;
 		}

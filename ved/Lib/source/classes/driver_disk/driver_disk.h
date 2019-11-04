@@ -10,7 +10,6 @@ namespace ved
 	{
 	public:
 			
-
 		static std::unique_ptr<OPEN_FILE_INFORMATION> make_file_info(
 				const std::wstring& file_name,
 				LARGE_INTEGER file_size,
@@ -19,31 +18,31 @@ namespace ved
 				enum Crypt mode_crypt
 			);
 		
+		
 		driver_disk(const driver_disk& other) = delete;
 		driver_disk(driver_disk&& other) noexcept = delete;
 		driver_disk& operator=(const driver_disk& other) = delete;
 		driver_disk& operator=(driver_disk&& other) noexcept = delete;
+		driver_disk(void) = default;
+		~driver_disk(void) = default;
 
-		static driver_disk& get_instance(void)
+		explicit driver_disk(const std::wstring & path_main_device)
 		{
-			static driver_disk driver{};
+			this->main_device_ = device(path_main_device);
+			this->path_main_device_ = path_main_device;
 			
-			return driver;
 		}
 
-		void connect_to_main_device(const std::wstring& path)
+		void connect_to_main_device(void)
 		{
-			this->main_device_ = device(path);
 			this->main_device_.connect();
-			this->path_main_device_ = path;
 		}
-
+		
 		auto is_connected(void) const noexcept {
 
 			return this->main_device_.is_connect();
 		}
-
-		
+				
 		void mount_disk(const std::unique_ptr<OPEN_FILE_INFORMATION> & open_file) const;
 
 		void create_file_disk(const std::unique_ptr<OPEN_FILE_INFORMATION> & open_file) const;
@@ -52,14 +51,11 @@ namespace ved
 
 
 	private:
-		driver_disk(void) = default;
-		~driver_disk(void) = default;
-		
+			
 		[[nodiscard]] size_t get_free_number_device(void)const;
-
-		std::wstring path_main_device_{};
-
+			
 		device main_device_{};
+		std::wstring path_main_device_{};
 
 
 	};
