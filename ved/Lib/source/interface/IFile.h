@@ -33,7 +33,7 @@ namespace ved
 			{
 				const auto dw_err_code = ::GetLastError();
 				if (dw_err_code != ERROR_IO_PENDING)
-					throw IFileException(L"Error WriteFile",
+					throw i_file_exception(L"Error WriteFile",
 						dw_err_code);
 
 
@@ -59,7 +59,7 @@ namespace ved
 			{
 				const auto dw_err_code = ::GetLastError();
 				if (dw_err_code != ERROR_IO_PENDING)
-					throw IFileException(L"Error ReadFile",
+					throw i_file_exception(L"Error ReadFile",
 						dw_err_code);
 
 

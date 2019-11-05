@@ -20,6 +20,7 @@ DRIVER_DISPATCH ReadAndWriteDevice;
 DRIVER_DISPATCH ControlDevice;
 KSTART_ROUTINE Thread;
 
+#pragma code_seg("INIT")
 NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPath)
 {
 	UNREFERENCED_PARAMETER(pRegPath);
@@ -68,6 +69,9 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		return status;
 	}
 
+	((PDEVICE_EXTENSION)g_pDeviceObject->DeviceExtension)->media_in_device = TRUE;
+	((PDEVICE_EXTENSION)g_pDeviceObject->DeviceExtension)->device_type = MAIN_DEVICE_TYPE;
+	
 	IoDeleteSymbolicLink(&g_usSymLinkName);
 	status = IoCreateSymbolicLink(&g_usSymLinkName, &g_usDeviceName);
 
@@ -77,8 +81,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		IoDeleteDevice(g_pDeviceObject);
 		return status;
 	}
-
-	
+		
 
 	/*
 	 * A temporary object has a name only as long as its handle count is greater than zero.
@@ -103,7 +106,10 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	DbgPrint("VED: Success driver installation!\r\n");
 	return status;
 }
+#pragma code_seg() // end INIT section
 
+
+#pragma code_seg("PAGE")
 _Use_decl_annotations_
 NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 {
@@ -160,9 +166,8 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		if (g_pDriverObject->DeviceObject->NextDevice != NULL)
 		{
 
-			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject->NextDevice;
-
-			ULONG index = 1;
+			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject;
+				
 
 			while (pDeviceObject_ != NULL)
 			{
@@ -175,13 +180,12 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 
 				if (tmp->media_in_device)
 				{
-					pDeviceObject_ = pDeviceObject->NextDevice;
-					++index;
+					pDeviceObject_ = pDeviceObject_->NextDevice;
 					continue;
 				}
 
 				pIrp->IoStatus.Status = STATUS_SUCCESS;
-				pIrp->IoStatus.Information = index;
+				pIrp->IoStatus.Information = tmp->device_number;
 				IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 				return pIrp->IoStatus.Status;
 
@@ -626,7 +630,7 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 	return status;
 
 }
-
+#pragma code_seg() // end PAGE section
 /*
    The DRIVER_UNLOAD function type is defined in the Wdm.h header file.
    To more accurately identify errors when you run the code analysis tools, be sure to add the _Use_decl_annotations_ annotation to your function definition.
@@ -634,6 +638,8 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
    For more information about the requirements for function declarations, see Declaring Functions by Using Function Role Types for WDM Drivers.
    For information about _Use_decl_annotations_, see Annotating Function Behavior.
 */
+
+#pragma code_seg("PAGE")
 _Use_decl_annotations_
 VOID Unload(IN PDRIVER_OBJECT pDriverObject)
 {
@@ -659,8 +665,10 @@ VOID Unload(IN PDRIVER_OBJECT pDriverObject)
 	DbgPrint("Unload success!\r\n");
 #endif
 }
+#pragma code_seg() // end PAGE section
 
-PDEVICE_OBJECT DeleteDevice(struct _DEVICE_OBJECT* pDeviceObject)
+#pragma code_seg("PAGE")
+PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
 {
 	PAGED_CODE();
 	ASSERT(pDeviceObject != NULL);
@@ -701,10 +709,13 @@ PDEVICE_OBJECT DeleteDevice(struct _DEVICE_OBJECT* pDeviceObject)
 	return pNextDevice;
 
 }
+#pragma code_seg() // end PAGE section
 
+#pragma code_seg("PAGE")
 _Use_decl_annotations_
 NTSTATUS CreateAndCloseDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 {
+	PAGED_CODE();
 	UNREFERENCED_PARAMETER(pDeviceObject);
 	pIrp->IoStatus.Status = STATUS_SUCCESS;
 	pIrp->IoStatus.Information = FILE_OPENED;
@@ -713,7 +724,9 @@ NTSTATUS CreateAndCloseDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP*
 
 	return STATUS_SUCCESS;
 }
+#pragma code_seg() // end PAGE section
 
+#pragma code_seg("PAGE")
 _Use_decl_annotations_
 NTSTATUS ReadAndWriteDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 {
@@ -759,7 +772,9 @@ NTSTATUS ReadAndWriteDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* p
 	return STATUS_PENDING;
 
 }
+#pragma code_seg() // end PAGE section
 
+#pragma code_seg("PAGE")
 NTSTATUS CreateDevice(struct _DRIVER_OBJECT* pDriverObject, ULONG uNumber, DEVICE_TYPE DeviceType)
 {
 
@@ -912,7 +927,9 @@ NTSTATUS CreateDevice(struct _DRIVER_OBJECT* pDriverObject, ULONG uNumber, DEVIC
 	return status;
 
 }
+#pragma code_seg() // end PAGE section
 
+#pragma code_seg("PAGE")
 VOID Thread(IN PVOID pContext)
 {
 
@@ -1147,7 +1164,9 @@ VOID Thread(IN PVOID pContext)
 
 
 }
+#pragma code_seg() // end PAGE section
 
+#pragma code_seg("PAGE")
 NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOpen)
 {
 	PAGED_CODE();
@@ -1625,6 +1644,9 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 
 	return STATUS_SUCCESS;
 }
+#pragma code_seg() // end PAGE section
+
+#pragma code_seg("PAGE")
 NTSTATUS CloseFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 {
 	PAGED_CODE();
@@ -1649,3 +1671,4 @@ NTSTATUS CloseFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 	return STATUS_SUCCESS;
 
 }
+#pragma code_seg() // end PAGE section

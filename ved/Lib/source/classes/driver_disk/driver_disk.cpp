@@ -15,13 +15,7 @@ namespace ved
 		}
 		
 		std::unique_ptr<OPEN_FILE_INFORMATION> uptr_file_info = std::make_unique<OPEN_FILE_INFORMATION>();
-
-		if (uptr_file_info == nullptr)
-		{
-			throw std::runtime_error("Error malloc _OPEN_FILE_INFORMATION!");
-		}
-
-		
+					
 
 		wcscpy_s(uptr_file_info->FileName, L"\\??\\");
 		wcscat_s(uptr_file_info->FileName, file_name.c_str());
@@ -57,11 +51,11 @@ namespace ved
 		{
 			auto define_device = define_manager.make_device();
 			define_device.connect();
+			define_manager.report_define();
 			define_device.send_ctl_code(
 				IOCTL_FILE_DISK_OPEN_FILE,
 				open_file.get(),
 				sizeof(_OPEN_FILE_INFORMATION) + open_file->FileNameLength * sizeof(WCHAR) + 7);
-			define_manager.report_define();
 		
 						
 		}

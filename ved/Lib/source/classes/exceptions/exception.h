@@ -47,15 +47,7 @@ namespace ved
 
 	};
 
-	class CNotImplementedException : public c_exception
-	{
-
-	public:
-
-		CNotImplementedException(void) : c_exception(L"NotImplementedException") { }
-
-	};
-
+	
 
 	class c_win_api_exception : public c_exception
 	{
@@ -113,23 +105,7 @@ namespace ved
 
 	};
 
-	class c_file_storage_exception final : public c_exception
-	{
-
-	public:
-		using c_exception::c_exception;
-
-	};
-
-	class c_digit_sign_exception final : public c_win_api_exception
-
-	{
-
-	public:
-		using c_win_api_exception::c_win_api_exception;
-
-	};
-
+	
 	class handle_exception final : public c_win_api_exception
 	{
 
@@ -147,23 +123,8 @@ namespace ved
 
 	};
 
-	class ThreadPoolException : public c_win_api_exception
-	{
 
-	public:
-		using c_win_api_exception::c_win_api_exception;
-
-	};
-
-	class IoCompletionPortException : public c_win_api_exception
-	{
-
-	public:
-		using c_win_api_exception::c_win_api_exception;
-
-	};
-
-	class IFileException : public c_win_api_exception
+	class i_file_exception final : public c_win_api_exception
 	{
 
 	public:
@@ -178,16 +139,7 @@ namespace ved
 		using c_win_api_exception::c_win_api_exception;
 
 	};
-
-	class HashException : public c_win_api_exception
-	{
-
-	public:
-		using c_win_api_exception::c_win_api_exception;
-
-	};
-
-
+		
 	class service_exception : public c_win_api_exception
 	{
 
@@ -196,14 +148,6 @@ namespace ved
 
 	};
 
-	class CIndexOutOfRangeException : public c_exception
-	{
-
-	public:
-
-		CIndexOutOfRangeException(void) : c_exception(L"IndexOutOfRangeException") { }
-
-	};
 
 	class driver_exception : public c_win_api_exception
 	{

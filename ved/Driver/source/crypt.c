@@ -2,10 +2,6 @@
 #include "../headers/constants.h"
 
 
-typedef __int32 uint32_t ;
-
-typedef unsigned char BYTE;
-
 void Rc4Crypt(PCHAR key,size_t len,PCHAR data,size_t data_len)
 {
 	char S[256];
