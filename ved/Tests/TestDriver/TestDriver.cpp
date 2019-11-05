@@ -63,6 +63,10 @@ int main()
 		}
 
 		std::wcout << L"File image deleted!" << std::endl;
+
+
+		std::wcout<<"\nTESTS SUCCESS!"<<std::endl;
+		
 	}
 	catch (const ved::c_win_api_exception& error)
 	{
