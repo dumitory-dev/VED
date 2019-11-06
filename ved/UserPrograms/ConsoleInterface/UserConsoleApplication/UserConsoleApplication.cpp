@@ -1,11 +1,16 @@
 ﻿#include "source/classes/engine/engine.h"
+#include "classes/copy_sparse/copy_sparse.h"
 
-int main(int argc, char ** argv)
+int main(int argc, wchar_t ** argv)
 {
 	try
 	{
-		
-		ved::engine::get_instance().execute();
+		auto res = ved::command_line_argument::get_command_lines_vector();
+		std::wcout<<res[0]<<res[1]<<std::endl;
+		std::cout<<"In progress..."<<std::endl;
+		ved::copy_sparse::copy(res[0],res[1]);
+		std::cout<<"Ok!"<<std::endl;
+		//ved::engine::get_instance().execute();
 							
 	}
 

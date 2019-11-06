@@ -4,19 +4,20 @@
 
 namespace ved
 {
-	class CommandLineArgument
+	class command_line_argument
 	{
 				
 	public:
-		CommandLineArgument(void) = delete;
-		CommandLineArgument(const CommandLineArgument&) = delete;
-		CommandLineArgument(CommandLineArgument&&) = delete;
-		CommandLineArgument& operator = (const CommandLineArgument&) = delete;
-		CommandLineArgument& operator = (CommandLineArgument&&) = delete;
-		~CommandLineArgument(void) = delete;
+		command_line_argument(void) = delete;
+		command_line_argument(const command_line_argument&) = delete;
+		command_line_argument(command_line_argument&&) = delete;
+		command_line_argument& operator = (const command_line_argument&) = delete;
+		command_line_argument& operator = (command_line_argument&&) = delete;
+		~command_line_argument(void) = delete;
 
 		
 		static std::wstringstream get_command_lines_stream(void);
+		static std::vector<std::wstring> get_command_lines_vector(void);
 
 	};
 }

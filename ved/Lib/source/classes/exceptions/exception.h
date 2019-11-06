@@ -132,6 +132,15 @@ namespace ved
 
 	};
 
+
+	class sparse_exception final : public c_win_api_exception
+	{
+
+	public:
+		using c_win_api_exception::c_win_api_exception;
+
+	};
+
 	class file_exception final : public c_win_api_exception
 	{
 

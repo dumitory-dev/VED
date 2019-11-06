@@ -40,6 +40,9 @@
     <Filter Include="source\classes\hash">
       <UniqueIdentifier>{fff1b8ef-a9af-4de5-a634-9759e87c05aa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\classes\copy_sparse">
+      <UniqueIdentifier>{d648c742-c5da-4516-92b2-48ffeff76359}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="global_headers\pch.cpp">
@@ -68,6 +71,9 @@
     </ClCompile>
     <ClCompile Include="source\classes\hash\hash.cpp">
       <Filter>source\classes\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="source\classes\copy_sparse\copy_sparse.cpp">
+      <Filter>source\classes\copy_sparse</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +112,9 @@
     </ClInclude>
     <ClInclude Include="source\classes\hash\hash.h">
       <Filter>source\classes\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="source\classes\copy_sparse\copy_sparse.h">
+      <Filter>source\classes\copy_sparse</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

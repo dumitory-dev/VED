@@ -28,7 +28,7 @@ namespace  ved
 	void  engine::set_arguments(void)
 	{
 
-		this->arguments_stream_ = ved::CommandLineArgument::get_command_lines_stream();
+		this->arguments_stream_ = ved::command_line_argument::get_command_lines_stream();
 
 		if (this->arguments_stream_.eof())
 		{
