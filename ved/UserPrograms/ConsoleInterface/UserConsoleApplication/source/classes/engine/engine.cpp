@@ -53,7 +53,7 @@ namespace  ved
 			!(this->arguments_stream_ >> letter)
 			)
 		{
-			throw std::invalid_argument("Invalid argument! letter is empty.");
+			throw std::runtime_error("Invalid arguments!  Please, run the command -help");
 		}
 
 		const std::string password_a(password.cbegin(), password.cend());
@@ -85,7 +85,7 @@ namespace  ved
 			!(this->arguments_stream_ >> mode)
 			)
 		{
-			throw std::invalid_argument("Invalid argument! letter is empty.");
+			throw std::runtime_error("Invalid arguments!  Please, run the command -help");
 		}
 					
 		size = size * 1024 * 1024;
@@ -128,12 +128,12 @@ namespace  ved
 			!(this->arguments_stream_ >> mode)
 			)
 		{
-			throw std::invalid_argument("Invalid argument! letter is empty.");
+			throw std::runtime_error("Invalid arguments!  Please, run the command -help");
 		}
 		
 		if (password.empty())
 		{
-			throw std::invalid_argument("Invalid argument! letter is empty.");
+			throw std::runtime_error("Invalid arguments!  Password is empty");
 		}
 		
 		size = size * 1024 * 1024;
@@ -223,7 +223,7 @@ namespace  ved
 			throw std::runtime_error("invalid argument!  Please, run the command -help");
 		}
 
-
+		std::wcout<<"Copy file in progress..."<<std::endl;
 		this->ved_manager_->copy_image(src,dest);
 		
 		
