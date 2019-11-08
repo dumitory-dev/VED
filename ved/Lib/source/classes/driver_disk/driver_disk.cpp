@@ -119,12 +119,17 @@ namespace ved
 			
 	}
 
+	void driver_disk::copy_image(const std::wstring & in, const std::wstring& out)
+	{
+		ved::copy_sparse::copy(in,out);
+	}
+
 	std::vector<OPEN_FILE_INFORMATION> driver_disk::get_mounted_disks(void) const
 	{
 
 		const size_t max_count_disk = 25;
-		std::vector<OPEN_FILE_INFORMATION> data(max_count_disk);
-		const auto ret = this->main_device_.send_ctl_code(IOCTL_GET_MOUNT_DEVICES,nullptr,0,data.data(),max_count_disk);
+		std::vector<OPEN_FILE_INFORMATION> data(max_count_disk,OPEN_FILE_INFORMATION());
+		const auto ret = this->main_device_.send_ctl_code(IOCTL_GET_MOUNT_DEVICES,nullptr,0,&data[0],max_count_disk * sizeof(OPEN_FILE_INFORMATION));
 		data.resize(ret);
 
 		return data;

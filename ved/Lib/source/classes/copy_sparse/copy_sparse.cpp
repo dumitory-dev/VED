@@ -74,7 +74,7 @@ namespace ved
 		
 			sz_drive.pop_back(); //delete '\0'
 			sz_drive+=L"\\";
-			std::wcout<<sz_drive<<std::endl;
+		
 			if (!::GetVolumeInformation(
 				sz_drive.c_str(),
 				sz_vol_name.data(),

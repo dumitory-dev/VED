@@ -2,6 +2,7 @@
 #include "../define_device/define_device_manager.h"
 #include "../device/device.h"
 #include "open_file_info.h"
+#include "../copy_sparse/copy_sparse.h"
 
 
 namespace ved
@@ -49,8 +50,8 @@ namespace ved
 
 		static void un_mount_disk(WCHAR letter);
 
-		
-		std::vector<OPEN_FILE_INFORMATION> get_mounted_disks(void) const;
+		static void copy_image(const std::wstring & in, const std::wstring & out);
+		[[nodiscard]] std::vector<OPEN_FILE_INFORMATION> get_mounted_disks(void) const;
 
 	private:
 			

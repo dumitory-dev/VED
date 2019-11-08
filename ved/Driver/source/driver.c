@@ -134,6 +134,10 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 	{
 	case IOCTL_GET_MOUNT_DEVICES:
 	{
+#ifdef DBG
+			DbgBreakPoint();
+#endif
+
 		if (pDeviceObject != g_pDeviceObject)
 		{
 			status = STATUS_INVALID_DEVICE_REQUEST;
@@ -141,7 +145,7 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 			break;
 		}
 
-		if (IoStack->Parameters.DeviceIoControl.OutputBufferLength < sizeof(POPEN_FILE_INFORMATION))
+		if (IoStack->Parameters.DeviceIoControl.OutputBufferLength < sizeof(OPEN_FILE_INFORMATION))
 		{
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			pIrp->IoStatus.Information = 0;
@@ -149,7 +153,7 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		}
 
 
-		POPEN_FILE_INFORMATION  data_buf = (POPEN_FILE_INFORMATION)pIrp->AssociatedIrp.SystemBuffer;
+		POPEN_FILE_INFORMATION  data_buf = (POPEN_FILE_INFORMATION)pIrp->UserBuffer;
 
 		if (data_buf == NULL)
 		{
@@ -175,12 +179,13 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 					break;
 				}
 
-				if (!tmp->media_in_device && pDeviceObject_ != g_pDeviceObject)
+				if (tmp->media_in_device && pDeviceObject_ != g_pDeviceObject)
 				{
 
-					RtlCopyMemory(data_buf[index].FileName, tmp->file_name.Buffer, tmp->file_name.Length + 1);
+					RtlCopyMemory(data_buf[index].FileName, tmp->file_name.Buffer, tmp->file_name.Length);
 
 					data_buf[index].FileNameLength = tmp->file_name.Length;
+					data_buf[index].FileSize = tmp->file_size;
 					data_buf[index].DriveLetter = tmp->letter;
 					data_buf[index].CryptMode = tmp->crypt_mode;
 					++index;

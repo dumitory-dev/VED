@@ -86,6 +86,11 @@ namespace ved
 		
 	}
 
+	void ved_manager::copy_image(const std::wstring& in, const std::wstring& out)
+	{
+		this->driver_.copy_image(in,out);
+	}
+
 	std::vector<OPEN_FILE_INFORMATION> ved_manager::get_mounted_disks(void)
 	{
 		this->connected();

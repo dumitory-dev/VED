@@ -47,6 +47,8 @@ namespace  ved
 
 	    virtual void stop_driver(const std::wstring & device_name = L"VEDriver") = 0;
 
+		virtual void copy_image(const std::wstring & in, const std::wstring & out) = 0;
+
 		template<typename T>
 		static std::unique_ptr<i_ved_manager> create(void)
 		{

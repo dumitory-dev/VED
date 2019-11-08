@@ -46,6 +46,7 @@ namespace  ved
 		void stop_driver(void) const;
 		void help(void) const;
 		void show_mounted_disks(void) const;
+		void copy(void);
 		
 		std::map<std::wstring,std::function<void(engine&)>> functions_ = {
 			{L"-mount",&engine::mount},
@@ -55,7 +56,8 @@ namespace  ved
 			{L"-start",&engine::start_driver},
 			{L"-stop",&engine::stop_driver},
 			{L"-help",&engine::help},
-			{L"-show",&engine::show_mounted_disks}
+			{L"-show",&engine::show_mounted_disks},
+			{L"-copy",&engine::copy}
 		};
 		
 	
