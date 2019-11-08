@@ -1,4 +1,7 @@
 #pragma once
+#include <Windows.h>
+#include "../general_headers/open_file_info.h"
+#include "../general_headers/constant.h"
 #include "../../../global_headers/pch.h"
 #include "../../classes/exceptions/Exception.h"
 

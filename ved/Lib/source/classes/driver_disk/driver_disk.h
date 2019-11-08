@@ -1,7 +1,9 @@
 #pragma once
+
+#include "../../../../general_headers/open_file_info.h"
+#include "../../../../general_headers/constant.h"
 #include "../define_device/define_device_manager.h"
 #include "../device/device.h"
-#include "open_file_info.h"
 #include "../copy_sparse/copy_sparse.h"
 
 

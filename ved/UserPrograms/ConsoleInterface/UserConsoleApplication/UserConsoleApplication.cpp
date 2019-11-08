@@ -1,5 +1,6 @@
-﻿#include "source/classes/engine/engine.h"
+﻿#include "../../../Lib/source/classes/ved_manager/ved_manager.h"
 #include "classes/copy_sparse/copy_sparse.h"
+#include "source/classes/engine/engine.h"
 
 int main(int argc, wchar_t ** argv)
 {
