@@ -57,7 +57,7 @@ namespace ved
 		const auto hash_password = this->make_md5_hash(password);
 		LARGE_INTEGER size_file;
 		size_file.QuadPart = size;
-		const auto disk_info = ved::driver_disk::make_file_info(path,size_file,L' ',hash_password,mode);
+		const auto disk_info = ved::driver_disk::make_file_info(path,size_file,L'C',hash_password,mode);
 		this->driver_.create_file_disk(disk_info);
 		
 		

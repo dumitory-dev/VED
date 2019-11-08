@@ -10,7 +10,7 @@ namespace ved
 			||
 			file_password.length() != 16
 			||
-			!iswalpha(drive_letter)
+			(!iswalpha(drive_letter) && drive_letter != ' ')
 			)
 		{
 			throw std::invalid_argument("Failed create_file_info! Invalid arguments!");
