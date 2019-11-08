@@ -6,6 +6,11 @@ namespace ved
 		const std::string& password,
 		WCHAR letter)
 	{
+		if (!std::filesystem::exists(path))
+		{
+			throw std::invalid_argument("File is not exist!");
+		}
+		
 	    this->connected();
 		const auto hash_password = this->make_md5_hash(password);
 		LARGE_INTEGER size;
@@ -21,6 +26,11 @@ namespace ved
 		const WCHAR letter,
 		const Crypt mode)
 	{
+		if (std::filesystem::exists(path))
+		{
+			throw std::invalid_argument("File is now exist!");
+		}
+		
 		this->connected();
 		const auto hash_password = this->make_md5_hash(password);
 		LARGE_INTEGER size_file;
@@ -37,6 +47,12 @@ namespace ved
 		const std::string& password,                      
 		const Crypt mode)
 	{
+
+		if (std::filesystem::exists(path))
+		{
+			throw std::invalid_argument("File is now exist!");
+		}
+		
 		this->connected();
 		const auto hash_password = this->make_md5_hash(password);
 		LARGE_INTEGER size_file;

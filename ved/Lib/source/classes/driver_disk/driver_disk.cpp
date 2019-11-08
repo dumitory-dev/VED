@@ -36,16 +36,19 @@ namespace ved
 
 	void driver_disk::mount_disk(const std::unique_ptr<OPEN_FILE_INFORMATION> & open_file) const
 	{
-		
-		const auto number_device = this->get_free_number_device();
-		const auto path_new_device = DEVICE_NAME_PREFIX + std::to_wstring(number_device);
-				
+
+
 		ved::define_device_manager define_manager(open_file->DriveLetter);
 		
 		if (define_manager.check_define())
 		{
 			throw std::runtime_error("Error check_define! Letter is exist!");
 		}
+		
+		
+		const auto number_device = this->get_free_number_device();
+		const auto path_new_device = DEVICE_NAME_PREFIX + std::to_wstring(number_device);
+				
 		
 		define_manager.link_device(path_new_device);
 		

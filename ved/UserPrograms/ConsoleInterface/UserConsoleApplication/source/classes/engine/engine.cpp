@@ -147,9 +147,9 @@ namespace  ved
 			{L"-help",&engine::start_driver}
 		 */
 		std::wcout << L"\n---HELP---\n";
-		std::wcout << L"\n-create - create image file. Params:\n1.Path file\n2.Size file\n3.Password\n4.Mode crypt(1 - RC4, 2 - AES)\n\n";
+		std::wcout << L"\n-create - create image file. Params:\n1.Path file\n2.Size file(mb)\n3.Password\n4.Mode crypt(1 - RC4, 2 - AES)\n\n";
 		std::wcout << L"\n-mount - mount disk from file. Params:\n1.Path file\n2.Password\n3.Letter disk\n\n";
-		std::wcout << L"\n-camount - create file and mount disk. Params:\n1.Path file\n2.Password\n3.Size file\n4.Letter disk\n5.Mode crypt(1 - RC4, 2 - AES)\n\n";
+		std::wcout << L"\n-camount - create file and mount disk. Params:\n1.Path file\n2.Password\n3.Size file(mb)\n4.Letter disk\n5.Mode crypt(1 - RC4, 2 - AES)\n\n";
 		std::wcout << L"\n-unmount - Unmount disk. Params:\n1.Letter disk\n\n";
 		std::wcout << L"\n-show - Show mounted disks. Params:\n none";
 		std::wcout << L"\n-start - Install and start driver. Params:\n1.Mode(optional) (-auto - autostart driver at system startup)\n";
