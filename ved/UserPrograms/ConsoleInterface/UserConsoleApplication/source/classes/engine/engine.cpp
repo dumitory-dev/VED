@@ -11,14 +11,14 @@ namespace  ved
 		{
 			if (this->arguments_stream_.eof())
 			{
-				throw std::runtime_error("invalid argument!(mount)");
+				throw std::runtime_error("Invalid argument! Please, run the command -help");
 			}
 		}
 		
 		const auto res_func = this->functions_.find(name_func);
 		if (res_func == this->functions_.cend())
 		{
-			throw std::runtime_error("Invalid arguments!");
+			throw std::runtime_error("Invalid arguments! Please, run the command -help");
 		}
 
 		res_func->second(*this);
@@ -30,10 +30,10 @@ namespace  ved
 
 		this->arguments_stream_ = ved::command_line_argument::get_command_lines_stream();
 
-		if (this->arguments_stream_.eof())
+		/*if (this->arguments_stream_.eof())
 		{
-			throw std::runtime_error("Invalid arguments!");
-		}
+			throw std::runtime_error("Invalid arguments!  Please, run the command -help");
+		}*/
 	}
 
 	void engine::mount(void)
@@ -122,7 +122,7 @@ namespace  ved
 
 		if (!startup_flag.empty() && startup_flag != L"-auto")
 		{
-			throw std::runtime_error("invalid argument!(un_mount)");
+			throw std::runtime_error("invalid argument!(un_mount)  Please, run the command -help");
 		}
 
 		this->ved_manager_->run_driver(SERVICE_AUTO_START);
@@ -151,6 +151,7 @@ namespace  ved
 		std::wcout << L"\n-mount - mount disk from file. Params:\n1.Path file\n2.Password\n3.Letter disk\n\n";
 		std::wcout << L"\n-camount - create file and mount disk. Params:\n1.Path file\n2.Password\n3.Size file\n4.Letter disk\n5.Mode crypt(1 - RC4, 2 - AES)\n\n";
 		std::wcout << L"\n-unmount - Unmount disk. Params:\n1.Letter disk\n\n";
+		std::wcout << L"\n-show - Show mounted disks. Params:\n none";
 		std::wcout << L"\n-start - Install and start driver. Params:\n1.Mode(optional) (-auto - autostart driver at system startup)\n";
 
 	}
