@@ -42,6 +42,9 @@ namespace  ved
 			const std::wstring & name_service = L"VEDriver"
 			) = 0;
 
+
+		virtual std::vector<OPEN_FILE_INFORMATION> get_mounted_disks(void) = 0;
+
 	    virtual void stop_driver(const std::wstring & device_name = L"VEDriver") = 0;
 
 		template<typename T>

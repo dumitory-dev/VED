@@ -70,6 +70,13 @@ namespace ved
 		
 	}
 
+	std::vector<OPEN_FILE_INFORMATION> ved_manager::get_mounted_disks(void)
+	{
+		this->connected();
+		return this->driver_.get_mounted_disks();
+				
+	}
+
 	std::string ved_manager::make_md5_hash(const std::string& password) const
 	{
 		auto hash = this->hash_convert_.get_hash({password.cbegin(),password.cend()});

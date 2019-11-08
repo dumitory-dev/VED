@@ -50,6 +50,8 @@ namespace ved
 
 		void stop_driver(const std::wstring& device_name = L"VEDriver") override;
 
+		std::vector<OPEN_FILE_INFORMATION> get_mounted_disks(void) override;
+
 	private:
 
 		ved::hash hash_convert_{hash::type_hash::MD5};
@@ -63,7 +65,7 @@ namespace ved
 			}
 		}
 
-		std::string make_md5_hash(const std::string & password) const;
+		[[nodiscard]] std::string make_md5_hash(const std::string & password) const;
 	};
 	
 }

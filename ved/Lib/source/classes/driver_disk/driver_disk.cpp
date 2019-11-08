@@ -9,6 +9,8 @@ namespace ved
 			(file_size.QuadPart != 0 && file_size.QuadPart < 10)
 			||
 			file_password.length() != 16
+			||
+			!iswalpha(drive_letter)
 			)
 		{
 			throw std::invalid_argument("Failed create_file_info! Invalid arguments!");
@@ -112,5 +114,16 @@ namespace ved
 		define_manager.delete_define();
 		define_manager.report_delete_define();
 			
+	}
+
+	std::vector<OPEN_FILE_INFORMATION> driver_disk::get_mounted_disks(void) const
+	{
+
+		const size_t max_count_disk = 25;
+		std::vector<OPEN_FILE_INFORMATION> data(max_count_disk);
+		const auto ret = this->main_device_.send_ctl_code(IOCTL_GET_MOUNT_DEVICES,nullptr,0,data.data(),max_count_disk);
+		data.resize(ret);
+
+		return data;
 	}
 }

@@ -57,4 +57,11 @@ namespace input
 		EXPECT_THROW(ved::driver_disk::make_file_info(path,size,letter,password,mode),std::invalid_argument);
 	}
 
+	TEST(TestLibInput, TestLetter) {
+			
+		size.QuadPart = 100;
+		letter = '1';
+		EXPECT_THROW(ved::driver_disk::make_file_info(path,size,letter,password,mode),std::invalid_argument);
+	}
+
 }

@@ -155,5 +155,21 @@ namespace  ved
 
 	}
 
+	void engine::show_mounted_disks(void) const
+	{
+		const auto data = this->ved_manager_->get_mounted_disks();
+		if (data.empty())
+		{
+			std::wcout<<L"\nNo mounted drives!"<<std::endl;
+			return;
+		}
 
+		for (const auto & open_file_information : data)
+		{
+			std::wcout<<"\n"<<"Path file - "<<open_file_information.FileName<<std::endl;
+		}
+
+		
+		
+	}
 }

@@ -21,6 +21,7 @@ typedef struct _DEVICE_EXTENSION {
     PVOID                       thread_pointer;
     BOOLEAN                     terminate_thread;
 	enum Crypt					crypt_mode;
+	WCHAR						letter;
 	
 
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;

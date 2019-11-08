@@ -42,7 +42,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		NULL,
 		NULL
 	);
-	
+
 	NTSTATUS status = ZwCreateDirectoryObject(
 		&g_pDirHandle,
 		DIRECTORY_ALL_ACCESS,
@@ -52,7 +52,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 	{
 		return status;
 	}
-	
+
 	status = IoCreateDevice(
 		DriverObject,
 		sizeof(DEVICE_EXTENSION),
@@ -71,7 +71,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 
 	((PDEVICE_EXTENSION)g_pDeviceObject->DeviceExtension)->media_in_device = TRUE;
 	((PDEVICE_EXTENSION)g_pDeviceObject->DeviceExtension)->device_type = MAIN_DEVICE_TYPE;
-	
+
 	IoDeleteSymbolicLink(&g_usSymLinkName);
 	status = IoCreateSymbolicLink(&g_usSymLinkName, &g_usDeviceName);
 
@@ -81,7 +81,7 @@ NTSTATUS DriverEntry(struct _DRIVER_OBJECT* DriverObject, UNICODE_STRING* pRegPa
 		IoDeleteDevice(g_pDeviceObject);
 		return status;
 	}
-		
+
 
 	/*
 	 * A temporary object has a name only as long as its handle count is greater than zero.
@@ -132,6 +132,74 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 
 	switch (IoStack->Parameters.DeviceIoControl.IoControlCode)
 	{
+	case IOCTL_GET_MOUNT_DEVICES:
+	{
+		if (pDeviceObject != g_pDeviceObject)
+		{
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			pIrp->IoStatus.Information = 0;
+			break;
+		}
+
+		if (IoStack->Parameters.DeviceIoControl.OutputBufferLength < sizeof(POPEN_FILE_INFORMATION))
+		{
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			pIrp->IoStatus.Information = 0;
+			break;
+		}
+
+
+		POPEN_FILE_INFORMATION  data_buf = (POPEN_FILE_INFORMATION)pIrp->AssociatedIrp.SystemBuffer;
+
+		if (data_buf == NULL)
+		{
+			status = STATUS_INVALID_PARAMETER;
+			pIrp->IoStatus.Information = 0;
+			break;
+		}
+
+		int index = 0;
+
+		if (g_pDriverObject->DeviceObject->NextDevice != NULL)
+		{
+
+			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject;
+
+
+			while (pDeviceObject_ != NULL)
+			{
+
+				PDEVICE_EXTENSION tmp = (PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension;
+				if (tmp == NULL)
+				{
+					break;
+				}
+
+				if (!tmp->media_in_device && pDeviceObject_ != g_pDeviceObject)
+				{
+
+					RtlCopyMemory(data_buf[index].FileName, tmp->file_name.Buffer, tmp->file_name.Length + 1);
+
+					data_buf[index].FileNameLength = tmp->file_name.Length;
+					data_buf[index].DriveLetter = tmp->letter;
+					data_buf[index].CryptMode = tmp->crypt_mode;
+					++index;
+
+				}
+
+				pDeviceObject_ = pDeviceObject_->NextDevice;
+
+
+			};
+
+		}
+
+		status = STATUS_SUCCESS;
+		pIrp->IoStatus.Information = index;
+		break;
+
+
+	}
 
 	case IOCTL_FILE_ADD_DEVICE:
 	{
@@ -140,6 +208,14 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		DbgBreakPoint();
 #endif
 
+		if (g_uCountDevice == 25)
+		{
+			status = STATUS_THREAD_NOT_RUNNING;
+			pIrp->IoStatus.Information = 0;
+			break;
+		}
+			
+			
 		status = CreateDevice(
 			g_pDriverObject,
 			g_uCountDevice,
@@ -167,11 +243,11 @@ NTSTATUS ControlDevice(struct _DEVICE_OBJECT* pDeviceObject, struct _IRP* pIrp)
 		{
 
 			PDEVICE_OBJECT pDeviceObject_ = g_pDriverObject->DeviceObject;
-				
+
 
 			while (pDeviceObject_ != NULL)
 			{
-				
+
 				PDEVICE_EXTENSION tmp = (PDEVICE_EXTENSION)pDeviceObject_->DeviceExtension;
 				if (tmp == NULL)
 				{
@@ -781,7 +857,7 @@ NTSTATUS CreateDevice(struct _DRIVER_OBJECT* pDriverObject, ULONG uNumber, DEVIC
 	ASSERT(pDriverObject != NULL);
 	UNICODE_STRING     usDeviceName;
 
-	usDeviceName.Buffer = (PWCHAR)ExAllocatePoolWithTag(PagedPool, MAXIMUM_FILENAME_LENGTH * 2, FILE_DISK_POOL_TAG);
+	usDeviceName.Buffer = (PWCHAR)ExAllocatePoolWithTag(NonPagedPool, MAXIMUM_FILENAME_LENGTH * 2, FILE_DISK_POOL_TAG);
 	if (usDeviceName.Buffer == NULL)
 	{
 		return STATUS_INSUFFICIENT_RESOURCES;
@@ -1032,17 +1108,17 @@ VOID Thread(IN PVOID pContext)
 				{
 					//Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer + uMemoryOffset), SECTOR_SIZE);
 					//EncryptDecrypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(pBuffer + uMemoryOffset), SECTOR_SIZE,FALSE);
-					
-					
+
+
 					if (pDeviceExtension->crypt_mode == RC4)
 					{
-						Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer+uMemoryOffset),SECTOR_SIZE);
+						Rc4Crypt(pDeviceExtension->password.Buffer, pDeviceExtension->password.Length, (PCHAR)(pBuffer + uMemoryOffset), SECTOR_SIZE);
 					}
 					else
 					{
 						DecryptEncrypt((UCHAR*)pDeviceExtension->password.Buffer, pDeviceExtension->password.Length, pBuffer + uMemoryOffset, SECTOR_SIZE, FALSE);
 					}
-					
+
 					uMemoryOffset += SECTOR_SIZE;
 
 				}
@@ -1089,7 +1165,7 @@ VOID Thread(IN PVOID pContext)
 					//
 					if (pDeviceExtension->crypt_mode == RC4)
 					{
-						Rc4Crypt(pDeviceExtension->password.Buffer,pDeviceExtension->password.Length,(PCHAR)(pBuffer+uMemoryOffsetWrite),SECTOR_SIZE);
+						Rc4Crypt(pDeviceExtension->password.Buffer, pDeviceExtension->password.Length, (PCHAR)(pBuffer + uMemoryOffsetWrite), SECTOR_SIZE);
 					}
 					else
 					{
@@ -1175,6 +1251,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 
 	PDEVICE_EXTENSION pDeviceExtension = (PDEVICE_EXTENSION)pDeviceObject->DeviceExtension;
 	POPEN_FILE_INFORMATION pOpenFileInformation = (POPEN_FILE_INFORMATION)pIrp->AssociatedIrp.SystemBuffer;
+	pDeviceExtension->letter = pOpenFileInformation->DriveLetter;
 
 	pDeviceExtension->file_name.Length = pOpenFileInformation->FileNameLength * sizeof(WCHAR);
 	pDeviceExtension->file_name.MaximumLength = pOpenFileInformation->FileNameLength * sizeof(WCHAR);
@@ -1188,12 +1265,13 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 	pDeviceExtension->password.Buffer = ExAllocatePoolWithTag(NonPagedPool, pOpenFileInformation->PasswordLength, FILE_DISK_POOL_TAG);
 	pDeviceExtension->crypt_mode = pOpenFileInformation->CryptMode;
 
+
 	if (pDeviceExtension->file_name.Buffer == NULL
 		||
 		pDeviceExtension->password.Buffer == NULL)
 	{
 
-		
+
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -1264,28 +1342,28 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 
 	if (NT_SUCCESS(status))
 	{
-		if ( pDeviceExtension->crypt_mode != CryptPrev)
+		if (pDeviceExtension->crypt_mode != CryptPrev)
 		{
 			status = STATUS_INVALID_PARAMETER;
-			
+
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
 			ZwClose(pDeviceExtension->file_handle);
 			return status;
-				
+
 		}
 		const PUCHAR pPasswordBuffer = (PUCHAR)ExAllocatePoolWithTag(
 			PagedPool,
-			MAX_PASSWORD_SIZE+CRYPT_OFFSET,
+			MAX_PASSWORD_SIZE + CRYPT_OFFSET,
 			FILE_DISK_POOL_TAG);
 
-				
+
 		if (pPasswordBuffer == NULL)
 		{
 
-		    status = STATUS_INSUFFICIENT_RESOURCES;
-			
+			status = STATUS_INSUFFICIENT_RESOURCES;
+
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
@@ -1340,7 +1418,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 				RtlFreeUnicodeString(&usFileName);
 				ZwClose(pDeviceExtension->file_handle);
 				status = STATUS_INVALID_PARAMETER;
-				
+
 				return status;
 			}
 		}
@@ -1354,7 +1432,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			usFileName.Buffer);
 		ExFreePool(pPasswordBuffer);
 
-	}
+		}
 
 	if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_NO_SUCH_FILE)
 	{
@@ -1367,8 +1445,8 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
-					
-			
+
+
 			return STATUS_NO_SUCH_FILE;
 		}
 
@@ -1378,7 +1456,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 		{
 
 			status = STATUS_INVALID_PARAMETER;
-			
+
 			ExFreePool(pDeviceExtension->file_name.Buffer);
 			ExFreePool(pDeviceExtension->password.Buffer);
 			RtlFreeUnicodeString(&usFileName);
@@ -1501,13 +1579,13 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			}
 			memset(pPasswordBuffer, 0, PASSWORD_OFFSET);
 
-			pPasswordBuffer[CRYPT_OFFSET -1] = (char)pDeviceExtension->crypt_mode;
+			pPasswordBuffer[CRYPT_OFFSET - 1] = (char)pDeviceExtension->crypt_mode;
 
 			for (int i = CRYPT_OFFSET; i <= pDeviceExtension->password.Length; ++i)
 			{
 				pPasswordBuffer[i] = pDeviceExtension->password.Buffer[i];
 			}
-			
+
 
 			if (pDeviceExtension->crypt_mode == RC4)
 			{
@@ -1527,7 +1605,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 					TRUE);
 
 			}
-						
+
 
 			if (ZwWriteFile(
 				pDeviceExtension->file_handle,
@@ -1552,7 +1630,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 			}
 
 			DbgPrint("VED: Password was be written!\n\r");
-				
+
 			ExFreePool(pPasswordBuffer);
 
 		}
@@ -1643,7 +1721,7 @@ NTSTATUS CreateFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp, BOOLEAN bIsOp
 	pIrp->IoStatus.Information = 0;
 
 	return STATUS_SUCCESS;
-}
+	}
 #pragma code_seg() // end PAGE section
 
 #pragma code_seg("PAGE")
@@ -1664,6 +1742,9 @@ NTSTATUS CloseFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 	ZwClose(pDeviceExtension->file_handle);
 
 	pDeviceExtension->media_in_device = FALSE;
+	pDeviceExtension->crypt_mode = CryptPrev;
+	pDeviceExtension->file_size.QuadPart = 0;
+	pDeviceExtension->letter = ' ';
 
 	pIrp->IoStatus.Status = STATUS_SUCCESS;
 	pIrp->IoStatus.Information = 0;

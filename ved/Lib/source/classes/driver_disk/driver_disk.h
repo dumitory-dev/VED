@@ -49,6 +49,8 @@ namespace ved
 
 		static void un_mount_disk(WCHAR letter);
 
+		
+		std::vector<OPEN_FILE_INFORMATION> get_mounted_disks(void) const;
 
 	private:
 			
