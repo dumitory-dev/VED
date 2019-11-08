@@ -18,7 +18,8 @@ int main(int argc, wchar_t ** argv)
 		ved::copy_sparse::copy(res[0],res[1]);
 		std::cout<<"Ok!"<<std::endl;*/
 		ved::engine::get_instance().execute();
-		std::wcout<<"Success!"<<std::endl;
+	
+		std::wcout<<"\nSuccess!"<<std::endl;
 							
 	}
 
