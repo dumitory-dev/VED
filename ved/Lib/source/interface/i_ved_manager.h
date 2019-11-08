@@ -1,6 +1,7 @@
 #pragma once
-#include "../Lib/global_headers/pch.h"
-#include "../general_headers/open_file_info.h"
+#include "../../global_headers/pch.h"
+#include "../../../general_headers/constant.h"
+#include "../../../general_headers/open_file_info.h"
 namespace  ved
 {
 
