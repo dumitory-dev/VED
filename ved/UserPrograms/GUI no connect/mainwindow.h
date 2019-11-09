@@ -29,6 +29,13 @@ private slots:
     void on_Mount_clicked();
 
     void CreateTable();
+
+    void on_StopD_clicked();
+
+    void on_Unmount_clicked();
+
+    void on_Refresh_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

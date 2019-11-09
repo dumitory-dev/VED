@@ -15,10 +15,13 @@ public:
     explicit CreateNew(QWidget *parent = nullptr);
     ~CreateNew();
 
-private slots:
-    void on_buttonBox_accepted();
+signals:
+    void signalToTable();
 
-    void on_buttonBox_rejected();
+private slots:
+    void on_Ok_clicked();
+
+    void on_Cancel_clicked();
 
     void on_PathButton_clicked();
 private:

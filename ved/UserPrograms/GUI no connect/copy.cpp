@@ -7,6 +7,7 @@ Copy::Copy(QWidget *parent) :
     ui(new Ui::Copy)
 {
     ui->setupUi(this);
+    ui->label->setVisible(false);
 }
 
 Copy::~Copy()
@@ -14,12 +15,15 @@ Copy::~Copy()
     delete ui;
 }
 
-void Copy::on_buttonBox_accepted()
+void Copy::on_Ok_clicked()
 {
+    if(ui->Dir->text().isEmpty()||ui->File->text().isEmpty())
+    ui->label->setVisible(true);
+    else
     close();
 }
 
-void Copy::on_buttonBox_rejected()
+void Copy::on_Cancel_clicked()
 {
     close();
 }

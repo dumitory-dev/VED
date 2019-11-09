@@ -11,7 +11,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     connect(this,&MainWindow::signalToTable,this,&MainWindow::CreateTable);
-
     emit signalToTable();
 }
 
@@ -21,6 +20,11 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::on_RunD_clicked()
+{
+
+}
+
+void MainWindow::on_StopD_clicked()
 {
 
 }
@@ -52,17 +56,33 @@ void MainWindow::on_Mount_clicked()
     emit signalToTable();
 }
 
+void MainWindow::on_Unmount_clicked()
+{
+    emit signalToTable();
+}
+
+void MainWindow::on_Refresh_clicked()
+{
+    emit signalToTable();
+}
+
 void MainWindow::CreateTable()
 {
     QStandardItemModel *smodel = new QStandardItemModel;
-    QStandardItem *Item = new QStandardItem();
+    QStandardItem *Item;
     smodel->setHorizontalHeaderItem(0,new QStandardItem("Drive letter"));
     smodel->setHorizontalHeaderItem(1,new QStandardItem("File size"));
     smodel->setHorizontalHeaderItem(2,new QStandardItem("File path"));
-
-    smodel->setItem(0,1,Item);
-
+    char k='0';
+    for(int i=0;i<3;i++)
+        for(int j=0;j<3;j++)
+        {
+            Item = new QStandardItem(QString(k++));
+            smodel->setItem(i,j,Item);
+        }
 
     this->ui->tableView->setModel(smodel);
     ui->tableView->resizeColumnsToContents();
 }
+
+

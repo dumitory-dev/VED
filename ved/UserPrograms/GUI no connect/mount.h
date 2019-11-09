@@ -16,14 +16,13 @@ public:
     ~Mount();
 
 signals:
-    void signalToTable();
 
 private slots:
     void on_PathButton_clicked();
 
-    void on_buttonBox_accepted();
+    void on_Ok_clicked();
 
-    void on_buttonBox_rejected();
+    void on_Cancel_clicked();
 
 private:
     Ui::Mount *ui;

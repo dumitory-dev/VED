@@ -1,6 +1,5 @@
 #include "mount.h"
 #include "ui_mount.h"
-#include "mainwindow.h"
 #include <QFileDialog>
 
 Mount::Mount(QWidget *parent) :
@@ -8,6 +7,7 @@ Mount::Mount(QWidget *parent) :
     ui(new Ui::Mount)
 {
     ui->setupUi(this);
+    ui->label->setVisible(false);
 }
 
 Mount::~Mount()
@@ -20,13 +20,15 @@ void Mount::on_PathButton_clicked()
     ui->File->setText(QFileDialog::getOpenFileName(this, "Get Any File","C://"));
 }
 
-void Mount::on_buttonBox_accepted()
+void Mount::on_Ok_clicked()
 {
-    emit signalToTable();
+    if(ui->File->text().isEmpty()||ui->FileName->text().isEmpty())
+    ui->label->setVisible(true);
+    else
     close();
 }
 
-void Mount::on_buttonBox_rejected()
+void Mount::on_Cancel_clicked()
 {
     close();
 }
