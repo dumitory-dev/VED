@@ -778,7 +778,20 @@ PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
 		ExFreePool(pDeviceExtension->device_name.Buffer);
 
 	}
-
+	if (pDeviceExtension->file_name.Buffer)
+	{
+		ExFreePool(pDeviceExtension->file_name.Buffer);
+	}
+	if (pDeviceExtension->password.Buffer)
+	{
+		ExFreePool(pDeviceExtension->password.Buffer);
+	}
+		
+	if (pDeviceExtension->file_handle)
+	{
+		ZwClose(pDeviceExtension->file_handle);
+	}
+	
 	/*
 	 * A pointer to the next device object, if any, that was created by the same driver.
 	 * The I/O manager updates this list at each successful call to IoCreateDevice or IoCreateDeviceSecure.
