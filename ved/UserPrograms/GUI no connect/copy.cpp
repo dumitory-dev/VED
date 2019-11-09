@@ -20,7 +20,10 @@ void Copy::on_Ok_clicked()
     if(ui->Dir->text().isEmpty()||ui->File->text().isEmpty())
     ui->label->setVisible(true);
     else
-    close();
+    {
+        emit signalToTable();
+        close();
+    }
 }
 
 void Copy::on_Cancel_clicked()

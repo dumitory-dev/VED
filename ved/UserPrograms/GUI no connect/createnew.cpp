@@ -22,7 +22,10 @@ void CreateNew::on_Ok_clicked()
     if(ui->FileName->text().isEmpty()||ui->Path->text().isEmpty()||ui->Password->text().isEmpty())
     ui->label->setVisible(true);
     else
-    close();
+    {
+        emit signalToTable();
+        close();
+    }
 }
 
 void CreateNew::on_Cancel_clicked()

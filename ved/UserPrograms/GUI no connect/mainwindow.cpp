@@ -31,29 +31,27 @@ void MainWindow::on_StopD_clicked()
 
 void MainWindow::on_Create_clicked()
 {
-    CreateNew NewDrive;
-    NewDrive.setFixedSize(500,220);
-    NewDrive.setModal(true);
-    NewDrive.exec();
-    emit signalToTable();
+    CreateNew *NewDrive = new CreateNew(this);
+    NewDrive->setFixedSize(500,220);
+    NewDrive->setModal(true);
+    NewDrive->exec();
 }
 
 void MainWindow::on_Copy_clicked()
 {
-    Copy CopyFile;
-    CopyFile.setFixedSize(400,125);
-    CopyFile.setModal(true);
-    CopyFile.exec();
-    emit signalToTable();
+    Copy *CopyFile = new Copy(this);
+    connect(CopyFile,SIGNAL(signalToTable()),this,SLOT(CreateTable()));
+    CopyFile->setFixedSize(400,125);
+    CopyFile->setModal(true);
+    CopyFile->exec();
 }
 
 void MainWindow::on_Mount_clicked()
 {
-    Mount Mount;
-    Mount.setFixedSize(400,125);
-    Mount.setModal(true);
-    Mount.exec();
-    emit signalToTable();
+    Mount *MountDrive = new Mount(this);
+    MountDrive->setFixedSize(400,125);
+    MountDrive->setModal(true);
+    MountDrive->exec();
 }
 
 void MainWindow::on_Unmount_clicked()

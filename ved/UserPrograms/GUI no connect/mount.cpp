@@ -25,7 +25,10 @@ void Mount::on_Ok_clicked()
     if(ui->File->text().isEmpty()||ui->FileName->text().isEmpty())
     ui->label->setVisible(true);
     else
-    close();
+    {
+        emit signalToTable();
+        close();
+    }
 }
 
 void Mount::on_Cancel_clicked()

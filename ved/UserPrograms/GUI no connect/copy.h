@@ -15,6 +15,9 @@ public:
     explicit Copy(QWidget *parent = nullptr);
     ~Copy();
 
+signals:
+    void signalToTable();
+
 private slots:
     void on_Ok_clicked();
 

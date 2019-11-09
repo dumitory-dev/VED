@@ -16,6 +16,7 @@ public:
     ~Mount();
 
 signals:
+    void signalToTable();
 
 private slots:
     void on_PathButton_clicked();
