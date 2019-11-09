@@ -36,4 +36,17 @@ FORMS += \
 
 # Default rules for deployment.
 
-DISTFILES +=
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../bin/Lib/Win32/release/ -lLib
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../bin/Lib/Win32/debug/ -lLib
+
+INCLUDEPATH += $$PWD/../../Lib
+DEPENDPATH += $$PWD/../../Lib
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../bin/Lib/Win32/release/libLib.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../bin/Lib/Win32/debug/libLib.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../bin/Lib/Win32/release/Lib.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../bin/Lib/Win32/debug/Lib.lib
+
+
+win32: LIBS += -lntdll
+win32: LIBS += -lAdvapi32

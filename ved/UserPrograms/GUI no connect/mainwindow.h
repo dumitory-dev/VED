@@ -15,6 +15,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    void signalToTable();
+
 private slots:
 
     void on_RunD_clicked();
@@ -24,6 +27,14 @@ private slots:
     void on_Copy_clicked();
 
     void on_Mount_clicked();
+
+    void CreateTable();
+
+    void on_StopD_clicked();
+
+    void on_Unmount_clicked();
+
+    void on_Refresh_clicked();
 
 private:
     Ui::MainWindow *ui;

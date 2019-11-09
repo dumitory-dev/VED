@@ -9,6 +9,7 @@ CreateNew::CreateNew(QWidget *parent) :
     ui->setupUi(this);
     ui->Crypt->addItem("RC4");
     ui->Crypt->addItem("AEC");
+    ui->label->setVisible(false);
 }
 
 CreateNew::~CreateNew()
@@ -16,12 +17,18 @@ CreateNew::~CreateNew()
     delete ui;
 }
 
-void CreateNew::on_buttonBox_accepted()
+void CreateNew::on_Ok_clicked()
 {
-    close();
+    if(ui->FileName->text().isEmpty()||ui->Path->text().isEmpty()||ui->Password->text().isEmpty())
+    ui->label->setVisible(true);
+    else
+    {
+        emit signalToTable();
+        close();
+    }
 }
 
-void CreateNew::on_buttonBox_rejected()
+void CreateNew::on_Cancel_clicked()
 {
     close();
 }
