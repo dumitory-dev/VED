@@ -35,5 +35,3 @@ FORMS += \
     mount.ui
 
 # Default rules for deployment.
-
-DISTFILES +=

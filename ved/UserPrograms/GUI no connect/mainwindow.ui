@@ -78,7 +78,7 @@
      <bool>true</bool>
     </attribute>
     <attribute name="horizontalHeaderHighlightSections">
-     <bool>true</bool>
+     <bool>false</bool>
     </attribute>
     <attribute name="verticalHeaderVisible">
      <bool>false</bool>
@@ -133,13 +133,6 @@
       <widget class="QPushButton" name="Unmount">
        <property name="text">
         <string>Unmount</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="Refresh">
-       <property name="text">
-        <string>Refresh</string>
        </property>
       </widget>
      </item>

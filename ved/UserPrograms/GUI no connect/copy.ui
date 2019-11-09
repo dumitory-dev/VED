@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Copy File</string>
   </property>
+  <property name="modal">
+   <bool>false</bool>
+  </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>

@@ -10,27 +10,9 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    QStandardItemModel *smodel = new QStandardItemModel;
-    QStandardItem *Item = new QStandardItem();
-    QStandardItem *Item2 = new QStandardItem();
-    QStandardItem *Item3= new QStandardItem();
-    int ID = 0;
-    int test = 1000000;
-     Item->setData (ID = test,Qt::DisplayRole);
-     Item2->setData("B", Qt::DisplayRole);
-     Item3->setData("C:\\Program Files (x86)\\Internet Explorer\\file.img", Qt::DisplayRole);
+    connect(this,&MainWindow::signalToTable,this,&MainWindow::CreateTable);
 
-    smodel->setHorizontalHeaderItem(0,new QStandardItem("Drive letter"));
-    smodel->setHorizontalHeaderItem(1,new QStandardItem("File size"));
-    smodel->setHorizontalHeaderItem(2,new QStandardItem("File path"));
-    smodel->setItem(0,1,Item);
-    smodel->setItem(0,0,Item2);
-    smodel->setItem(0,2,Item3);
-
-
-    this->ui->tableView->setModel(smodel);
-    ui->tableView->resizeRowsToContents();
-    ui->tableView->resizeColumnsToContents();
+    emit signalToTable();
 }
 
 MainWindow::~MainWindow()
@@ -40,6 +22,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_RunD_clicked()
 {
+
 }
 
 void MainWindow::on_Create_clicked()
@@ -48,6 +31,7 @@ void MainWindow::on_Create_clicked()
     NewDrive.setFixedSize(500,220);
     NewDrive.setModal(true);
     NewDrive.exec();
+    emit signalToTable();
 }
 
 void MainWindow::on_Copy_clicked()
@@ -56,6 +40,7 @@ void MainWindow::on_Copy_clicked()
     CopyFile.setFixedSize(400,125);
     CopyFile.setModal(true);
     CopyFile.exec();
+    emit signalToTable();
 }
 
 void MainWindow::on_Mount_clicked()
@@ -64,4 +49,20 @@ void MainWindow::on_Mount_clicked()
     Mount.setFixedSize(400,125);
     Mount.setModal(true);
     Mount.exec();
+    emit signalToTable();
+}
+
+void MainWindow::CreateTable()
+{
+    QStandardItemModel *smodel = new QStandardItemModel;
+    QStandardItem *Item = new QStandardItem();
+    smodel->setHorizontalHeaderItem(0,new QStandardItem("Drive letter"));
+    smodel->setHorizontalHeaderItem(1,new QStandardItem("File size"));
+    smodel->setHorizontalHeaderItem(2,new QStandardItem("File path"));
+
+    smodel->setItem(0,1,Item);
+
+
+    this->ui->tableView->setModel(smodel);
+    ui->tableView->resizeColumnsToContents();
 }

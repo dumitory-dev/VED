@@ -1,5 +1,6 @@
 #include "mount.h"
 #include "ui_mount.h"
+#include "mainwindow.h"
 #include <QFileDialog>
 
 Mount::Mount(QWidget *parent) :
@@ -21,6 +22,7 @@ void Mount::on_PathButton_clicked()
 
 void Mount::on_buttonBox_accepted()
 {
+    emit signalToTable();
     close();
 }
 

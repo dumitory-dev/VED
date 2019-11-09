@@ -15,6 +15,9 @@ public:
     explicit Mount(QWidget *parent = nullptr);
     ~Mount();
 
+signals:
+    void signalToTable();
+
 private slots:
     void on_PathButton_clicked();
 

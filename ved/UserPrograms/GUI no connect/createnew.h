@@ -21,7 +21,6 @@ private slots:
     void on_buttonBox_rejected();
 
     void on_PathButton_clicked();
-
 private:
     Ui::CreateNew *ui;
 };
