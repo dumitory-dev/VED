@@ -21,7 +21,7 @@ namespace ved
 		}
 		
 		~ved_manager(void) = default;
-	    ved_manager(const ved_manager& other) = delete;
+                ved_manager(const ved_manager& other) = delete;
 		ved_manager(ved_manager&& other) noexcept = delete;
 		ved_manager& operator=(const ved_manager& other) = delete;
 		ved_manager& operator=(ved_manager&& other) noexcept = delete;
@@ -66,7 +66,15 @@ namespace ved
 		{
 			if (!this->driver_.is_connected())
 			{
-				this->driver_.connect_to_main_device();
+				try
+				{
+					this->driver_.connect_to_main_device();
+				}
+				catch (...)
+				{
+					throw std::runtime_error("Error open driver device!");
+				}
+				
 			}
 		}
 

@@ -3,40 +3,76 @@
 #include <QFileDialog>
 
 Copy::Copy(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::Copy)
+  QDialog(parent),
+  ui(new Ui::Copy)
 {
-    ui->setupUi(this);
-    ui->label->setVisible(false);
+  ui->setupUi(this);
+  ui->label->setVisible(false);
 }
 
 Copy::~Copy()
 {
-    delete ui;
+  delete ui;
 }
 
 void Copy::on_Ok_clicked()
 {
-    if(ui->Dir->text().isEmpty()||ui->File->text().isEmpty())
-    ui->label->setVisible(true);
-    else
-    {
-        emit signalToTable();
-        close();
-    }
+
+
+  try {
+
+    if(ui->Dir->text().isEmpty()||ui->File->text().isEmpty()){
+        ui->label->setVisible(true);
+        return;
+      }
+
+    this->ui->label->setText("Process...");
+    this->ui->label->setVisible(true);
+
+    MainWindow::uptr_ved_manager_->copy_image(
+          this->ui->File->text().toStdWString(),
+          this->ui->Dir->text().toStdWString());
+
+    this->message_.setText("Success!");
+
+    this->message_.exec();
+
+    close();
+
+
+  }
+  catch (const ved::c_win_api_exception & error) {
+
+    this->message_.critical(
+          nullptr,
+          "Error"
+          ,QString::fromWCharArray(error.GetMessageW().c_str()));
+
+
+  }
+  catch(const std::exception & error){
+
+    this->message_.critical(
+          nullptr,
+          "Error"
+          ,QString::fromUtf8(error.what()));
+
+  }
+
+
 }
 
 void Copy::on_Cancel_clicked()
 {
-    close();
+  close();
 }
 
 void Copy::on_PathButton_clicked()
 {
-    ui->File->setText(QFileDialog::getOpenFileName(this, "Get Any File","C://"));
+  ui->File->setText(QFileDialog::getOpenFileName(this, "Get Any File","C://"));
 }
 
 void Copy::on_PathButton_2_clicked()
 {
-    ui->Dir->setText(QFileDialog::getExistingDirectory(this, "Get Any File","C://"));
+  ui->Dir->setText(QFileDialog::getExistingDirectory(this, "Get Any File","C://"));
 }

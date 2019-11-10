@@ -2,6 +2,7 @@
 #define CREATENEW_H
 
 #include <QDialog>
+#include "mainwindow.h"
 
 namespace Ui {
 class CreateNew;
@@ -26,6 +27,7 @@ private slots:
     void on_PathButton_clicked();
 private:
     Ui::CreateNew *ui;
+    QMessageBox message_;
 };
 
 #endif // CREATENEW_H

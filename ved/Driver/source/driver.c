@@ -731,7 +731,10 @@ VOID Unload(IN PDRIVER_OBJECT pDriverObject)
 
 	PDEVICE_OBJECT pDeviceObject = pDriverObject->DeviceObject;
 
-
+#ifdef  DBG
+	DbgBreakPoint();
+#endif
+	
 	if (pDeviceObject != NULL)
 	{
 		while (pDeviceObject)
@@ -754,6 +757,11 @@ PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
 	PAGED_CODE();
 	ASSERT(pDeviceObject != NULL);
 
+#ifdef  DBG
+	DbgBreakPoint();
+#endif
+
+	
 	PDEVICE_EXTENSION pDeviceExtension = pDeviceObject->DeviceExtension;
 	pDeviceExtension->terminate_thread = TRUE;
 

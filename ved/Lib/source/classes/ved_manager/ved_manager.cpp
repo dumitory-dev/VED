@@ -80,6 +80,14 @@ namespace ved
 
 	void ved_manager::stop_driver(const std::wstring& device_name)
 	{
+
+
+		auto disks = this->get_mounted_disks();
+
+		for (auto & element : disks)
+		{
+			this->un_mount(element.DriveLetter);
+		}
 		
 		ved::install_manager::unload_service(device_name);
 		ved::install_manager::uninstall_service(device_name);

@@ -2,6 +2,8 @@
 #define COPY_H
 
 #include <QDialog>
+#include "mainwindow.h"
+#include "source/classes/exceptions/exception.h"
 
 namespace Ui {
 class Copy;
@@ -29,6 +31,8 @@ private slots:
 
 private:
     Ui::Copy *ui;
+    QMessageBox message_;
+
 };
 
 #endif // COPY_H

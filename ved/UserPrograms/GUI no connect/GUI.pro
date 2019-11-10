@@ -48,5 +48,16 @@ else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/..
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../bin/Lib/Win32/debug/Lib.lib
 
 
-win32: LIBS += -lntdll
-win32: LIBS += -lAdvapi32
+#win32: LIBS += -lntdll
+#win32: LIBS += -lAdvapi32
+
+#win32: LIBS += -lntdll
+
+
+win64: LIBS += -lntdll
+
+
+
+win32: LIBS += -lntdll32
+
+win32: LIBS += -lAdvAPI86

@@ -2,6 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QString>
+#include <QMessageBox>
+#include <QStandardItemModel>
+#include <QStandardItem>
+#include <string>
+#include "source/interface/i_ved_manager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -12,6 +18,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+
+    static std::unique_ptr<ved::i_ved_manager> uptr_ved_manager_;
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
@@ -37,6 +45,12 @@ private slots:
     void on_Refresh_clicked();
 
 private:
+
     Ui::MainWindow *ui;
+    QMessageBox message_;
+
+    QStandardItemModel *smodel{};
+
+
 };
 #endif // MAINWINDOW_H

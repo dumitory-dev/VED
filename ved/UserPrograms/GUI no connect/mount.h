@@ -2,6 +2,8 @@
 #define MOUNT_H
 
 #include <QDialog>
+#include "mainwindow.h"
+#include "source/classes/exceptions/exception.h"
 
 namespace Ui {
 class Mount;
@@ -27,6 +29,7 @@ private slots:
 
 private:
     Ui::Mount *ui;
+    QMessageBox message_;
 };
 
 #endif // MOUNT_H
