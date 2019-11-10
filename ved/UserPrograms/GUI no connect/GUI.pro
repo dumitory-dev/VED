@@ -3,6 +3,7 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
+win32:RC_ICONS += release\icon\1.ico
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -61,3 +62,6 @@ win64: LIBS += -lntdll
 win32: LIBS += -lntdll32
 
 win32: LIBS += -lAdvAPI86
+
+DISTFILES += \
+    release/icon/1.png

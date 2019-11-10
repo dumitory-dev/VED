@@ -782,23 +782,9 @@ PDEVICE_OBJECT DeleteDevice(IN PDEVICE_OBJECT pDeviceObject)
 	ObDereferenceObject(pDeviceExtension->thread_pointer);
 	if (pDeviceExtension->device_name.Buffer != NULL)
 	{
-
 		ExFreePool(pDeviceExtension->device_name.Buffer);
-
 	}
-	if (pDeviceExtension->file_name.Buffer)
-	{
-		ExFreePool(pDeviceExtension->file_name.Buffer);
-	}
-	if (pDeviceExtension->password.Buffer)
-	{
-		ExFreePool(pDeviceExtension->password.Buffer);
-	}
-		
-	if (pDeviceExtension->file_handle)
-	{
-		ZwClose(pDeviceExtension->file_handle);
-	}
+			
 	
 	/*
 	 * A pointer to the next device object, if any, that was created by the same driver.
@@ -895,7 +881,7 @@ NTSTATUS CreateDevice(struct _DRIVER_OBJECT* pDriverObject, ULONG uNumber, DEVIC
 
 	UNICODE_STRING    usSSDDL;
 	//“D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)(A;;GA;;;WD)”
-	RtlInitUnicodeString(&usSSDDL, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)(A;;GA;;;WD)");
+	RtlInitUnicodeString(&usSSDDL, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)");
 
 	//DbgBreakPoint();
 
@@ -1766,6 +1752,7 @@ NTSTATUS CloseFile(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 
 	ZwClose(pDeviceExtension->file_handle);
+	
 
 	pDeviceExtension->media_in_device = FALSE;
 	pDeviceExtension->crypt_mode = CryptPrev;

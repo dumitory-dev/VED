@@ -44,7 +44,11 @@ private slots:
 
     void on_Refresh_clicked();
 
+    void on_pushButton_clicked();
+
 private:
+
+    void update_table(void);
 
     Ui::MainWindow *ui;
     QMessageBox message_;

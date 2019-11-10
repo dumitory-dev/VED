@@ -18,7 +18,9 @@ MainWindow::MainWindow(QWidget *parent)
   connect(this,&MainWindow::signalToTable,this,&MainWindow::CreateTable);
   this->smodel = new QStandardItemModel();
   this->ui->tableView->setModel(this->smodel);
+  this->update_table();
   message_.setFixedSize(500,200);
+
 
 }
 
@@ -182,9 +184,7 @@ void MainWindow::CreateTable()
 
     this->smodel = new QStandardItemModel;
     QStandardItem *Item;
-    smodel->setHorizontalHeaderItem(0,new QStandardItem("Drive letter"));
-    smodel->setHorizontalHeaderItem(1,new QStandardItem("File size"));
-    smodel->setHorizontalHeaderItem(2,new QStandardItem("File path"));
+    update_table();
 
     for (size_t i{0};i < mounted_data.size();++i) {
 
@@ -192,9 +192,10 @@ void MainWindow::CreateTable()
 
 
         Item = new QStandardItem(QString(mounted_data[i].DriveLetter));
+
         smodel->setItem(static_cast<int>(i),j++,Item);
 
-        Item = new QStandardItem(QString::number(mounted_data[i].FileSize.QuadPart));
+        Item = new QStandardItem(QString::number(mounted_data[i].FileSize.QuadPart / 1024 / 1024));
         smodel->setItem(static_cast<int>(i),j++,Item);
 
         Item = new QStandardItem(QString::fromWCharArray(mounted_data[i].FileName));
@@ -229,3 +230,18 @@ void MainWindow::CreateTable()
 }
 
 
+
+void MainWindow::on_pushButton_clicked()
+{
+  this->close();
+}
+
+void MainWindow::update_table()
+{
+  smodel->setHorizontalHeaderItem(0,new QStandardItem("Drive letter"));
+  smodel->setHorizontalHeaderItem(1,new QStandardItem("File size(mb)"));
+  smodel->setHorizontalHeaderItem(2,new QStandardItem("File path"));
+  this->ui->tableView->setColumnWidth(0,100);
+  this->ui->tableView->setColumnWidth(1,150);
+  this->ui->tableView->setColumnWidth(2,198);
+}

@@ -8,6 +8,7 @@ Mount::Mount(QWidget *parent) :
 {
   ui->setupUi(this);
   ui->label->setVisible(false);
+  this->ui->Letter->setValidator(new QRegExpValidator(QRegExp("[A-Z]+"), this));
 }
 
 Mount::~Mount()
@@ -41,7 +42,7 @@ void Mount::on_Ok_clicked()
       }
 
     MainWindow::uptr_ved_manager_->mount(
-          this->ui->PathToFile->text().toStdWString(),
+          this->ui->PathToFile->text().replace('/','\\').toStdWString(),
           this->ui->Password->text().toStdString(),
           this->ui->Letter->text().toStdWString()[0]
         );

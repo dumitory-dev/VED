@@ -35,7 +35,7 @@ void CreateNew::on_Ok_clicked()
 
 
     MainWindow::uptr_ved_manager_->create_file(
-          ui->Path->text().toStdWString(),
+          ui->Path->text().replace('/','\\').toStdWString(),
           this->ui->spinBox->text().toULongLong() * 1024 * 1024,
           ui->Password->text().toStdString(),
           static_cast<Crypt>(++mode)

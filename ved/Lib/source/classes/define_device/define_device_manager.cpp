@@ -44,14 +44,19 @@ namespace  ved
 			settings.dw_creation_disposition = OPEN_EXISTING;
 			settings.dw_desired_access = GENERIC_READ | GENERIC_WRITE;
 			settings.dw_flags_and_attributes = FILE_FLAG_NO_BUFFERING;
+			settings.dw_share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 			settings.ws_file_name = this->letter_;
-
+		
 			auto tmp = ved::file::create(settings);
 		
 			return true;
 		}
-		catch (...)
+		catch (const ved::c_win_api_exception & error)
 		{
+			if (error.get_code() == 32)
+			{
+				return true;
+			}
 			return false;
 		}
 	}

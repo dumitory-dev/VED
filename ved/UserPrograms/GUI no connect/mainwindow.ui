@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -46,7 +49,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>471</width>
+      <width>451</width>
       <height>230</height>
      </rect>
     </property>
@@ -75,10 +78,10 @@
      <bool>true</bool>
     </property>
     <attribute name="horizontalHeaderMinimumSectionSize">
-     <number>150</number>
+     <number>0</number>
     </attribute>
     <attribute name="horizontalHeaderDefaultSectionSize">
-     <number>150</number>
+     <number>0</number>
     </attribute>
     <attribute name="horizontalHeaderHighlightSections">
      <bool>false</bool>
@@ -143,6 +146,13 @@
       <widget class="QPushButton" name="Refresh">
        <property name="text">
         <string>Refresh</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Exit</string>
        </property>
       </widget>
      </item>

@@ -2,6 +2,7 @@
 #define MOUNT_H
 
 #include <QDialog>
+#include <QRegExpValidator>
 #include "mainwindow.h"
 #include "source/classes/exceptions/exception.h"
 

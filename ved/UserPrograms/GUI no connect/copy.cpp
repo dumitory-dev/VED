@@ -30,8 +30,8 @@ void Copy::on_Ok_clicked()
     this->ui->label->setVisible(true);
 
     MainWindow::uptr_ved_manager_->copy_image(
-          this->ui->File->text().toStdWString(),
-          this->ui->Dir->text().toStdWString());
+          this->ui->File->text().replace('/','\\').toStdWString(),
+          this->ui->Dir->text().replace('/','\\').toStdWString());
 
     this->message_.setText("Success!");
 
@@ -74,5 +74,5 @@ void Copy::on_PathButton_clicked()
 
 void Copy::on_PathButton_2_clicked()
 {
-  ui->Dir->setText(QFileDialog::getExistingDirectory(this, "Get Any File","C://"));
+  ui->Dir->setText(QFileDialog::getSaveFileName(this, "Get Any File","C://"));
 }
