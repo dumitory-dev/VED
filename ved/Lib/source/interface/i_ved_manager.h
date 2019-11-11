@@ -50,6 +50,8 @@ namespace  ved
 
 		virtual void copy_image(const std::wstring & in, const std::wstring & out) = 0;
 
+		virtual void un_mount_all(void) = 0;
+
 		template<typename T>
 		static std::unique_ptr<i_ved_manager> create(void)
 		{

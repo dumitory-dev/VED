@@ -55,6 +55,8 @@ namespace ved
 		void stop_driver(const std::wstring& device_name = L"VEDriver") override;
 		void copy_image(const std::wstring& in, const std::wstring& out) override;
 
+		void un_mount_all(void) override;
+
 		std::vector<OPEN_FILE_INFORMATION> get_mounted_disks(void) override;
 
 	private:

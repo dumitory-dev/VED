@@ -97,10 +97,24 @@ namespace  ved
 	void engine::un_mount(void)
 	{
 		
-		wchar_t letter;
-		this->arguments_stream_ >> letter;
-		this->ved_manager_->un_mount(letter);
+		
+		std::wstring data;
+		if (!(this->arguments_stream_ >> data))
+		{
+			
+			throw std::runtime_error("Invalid arguments!  Please, run the command -help");
+		}
 
+		if (data.size() == 1)
+	    {
+				this->ved_manager_->un_mount(data[0]);
+				return;
+		}
+
+		if (data == L"-all")
+		{
+			this->ved_manager_->un_mount_all();
+		}
 
 	}
 
@@ -184,7 +198,7 @@ namespace  ved
 		std::wcout << L"\n-create - create image file. Params:\n1.Path file\n2.Size file(mb)\n3.Password\n4.Mode crypt(1 - RC4, 2 - AES)\n\n";
 		std::wcout << L"\n-mount - mount disk from file. Params:\n1.Path file\n2.Password\n3.Letter disk\n\n";
 		std::wcout << L"\n-camount - create file and mount disk. Params:\n1.Path file\n2.Password\n3.Size file(mb)\n4.Letter disk\n5.Mode crypt(1 - RC4, 2 - AES)\n\n";
-		std::wcout << L"\n-unmount - Unmount disk. Params:\n1.Letter disk\n\n";
+		std::wcout << L"\n-unmount - Unmount disk. Params:\n1.Letter disk or -all for unmount all disks\n\n";
 		std::wcout << L"\n-show - Show mounted disks. Params:\n none\n";
 		std::wcout << L"\n-copy - Copy image disk. Params:\n1. Source path\n2.Dest path\n";
 		std::wcout << L"\n-start - Install and start driver. Params:\n1.Mode(optional) (-auto - autostart driver at system startup)\n";

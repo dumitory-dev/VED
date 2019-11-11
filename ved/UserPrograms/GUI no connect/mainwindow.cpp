@@ -245,3 +245,32 @@ void MainWindow::update_table()
   this->ui->tableView->setColumnWidth(1,150);
   this->ui->tableView->setColumnWidth(2,198);
 }
+
+void MainWindow::on_pushButton_2_clicked()
+{
+  try {
+
+
+    MainWindow::uptr_ved_manager_->un_mount_all();
+    emit signalToTable();
+
+  }
+  catch (const ved::c_win_api_exception & error) {
+
+    this->message_.critical(
+          nullptr,
+          "Error"
+          ,QString::fromWCharArray(error.GetMessageW().c_str()));
+
+
+  }
+  catch(const std::exception & error){
+
+    this->message_.critical(
+          nullptr,
+          "Error"
+          ,QString::fromUtf8(error.what()));
+
+  }
+
+}

@@ -50,7 +50,7 @@
       <x>10</x>
       <y>10</y>
       <width>451</width>
-      <height>230</height>
+      <height>241</height>
      </rect>
     </property>
     <property name="layoutDirection">
@@ -87,16 +87,16 @@
      <bool>false</bool>
     </attribute>
     <attribute name="verticalHeaderVisible">
-     <bool>true</bool>
+     <bool>false</bool>
     </attribute>
    </widget>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>510</x>
-      <y>10</y>
+      <y>8</y>
       <width>111</width>
-      <height>231</height>
+      <height>241</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -146,6 +146,13 @@
       <widget class="QPushButton" name="Refresh">
        <property name="text">
         <string>Refresh</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="text">
+        <string>Unmount All</string>
        </property>
       </widget>
      </item>

@@ -48,6 +48,7 @@ namespace  ved
 		void show_mounted_disks(void) const;
 		void copy(void);
 		
+		
 		std::map<std::wstring,std::function<void(engine&)>> functions_ = {
 			{L"-mount",&engine::mount},
 			{L"-camount",&engine::create_and_mount},
@@ -58,6 +59,7 @@ namespace  ved
 			{L"-help",&engine::help},
 			{L"-show",&engine::show_mounted_disks},
 			{L"-copy",&engine::copy}
+			
 		};
 		
 	

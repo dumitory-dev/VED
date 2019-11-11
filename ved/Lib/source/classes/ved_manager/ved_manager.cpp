@@ -82,12 +82,7 @@ namespace ved
 	{
 
 
-		auto disks = this->get_mounted_disks();
-
-		for (auto & element : disks)
-		{
-			this->un_mount(element.DriveLetter);
-		}
+		this->un_mount_all();
 		
 		ved::install_manager::unload_service(device_name);
 		ved::install_manager::uninstall_service(device_name);
@@ -97,6 +92,17 @@ namespace ved
 	void ved_manager::copy_image(const std::wstring& in, const std::wstring& out)
 	{
 		this->driver_.copy_image(in,out);
+	}
+
+	void ved_manager::un_mount_all(void)
+	{
+	    auto disks = this->get_mounted_disks();
+
+		for (auto & element : disks)
+		{
+			this->un_mount(element.DriveLetter);
+		}
+				
 	}
 
 	std::vector<OPEN_FILE_INFORMATION> ved_manager::get_mounted_disks(void)

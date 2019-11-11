@@ -53,7 +53,7 @@ namespace  ved
 		}
 		catch (const ved::c_win_api_exception & error)
 		{
-			if (error.get_code() == 32)
+			if (error.get_code() != 0x02)
 			{
 				return true;
 			}
