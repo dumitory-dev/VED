@@ -1,30 +1,28 @@
-#   Virtual encrypted disk	
+### Purpose
 
-###   Назначение
+An application for creating and working with virtual encrypted logical drives.
 
-Приложение для создания и работы с виртуальными зашифрованными логическими дисками.
+### Functionality
+1. Creates a crypted disk stored in a file (the path to the file and name, password, size of the created disk are indicated)
+2. Mounts the specified file as a logical drive. (checking the password specified at creation)
+3. Removes the previously mounted disk.
+4. Provides the ability to view a list of mounted drives.
+5. Encrypts / decrypts data written / read from disk.
+6. Supports working with file paths in different languages.
 
-###  Функциональные возможности
-1.	Создает криптованный диск, хранящийся в файле (указывается путь к файлу и имя, пароль, размер создаваемого диска)
-2.	Монтирует указанный файл как логический диск. (проверяя пароль, указанный при создании)
-3.	Демонтирует ранее смонтированный диск.
-4.	Дает возможность просмотреть список смонтированных дисков.
-5.	Шифрует/дешифрует данные, записываемые/считываемые с диска.
-6.	Поддерживает работу с путями файлов на разных языках.
+### Technology Requirements
+1. The GUI can be written in C # or Qt or another framework.
+2. For development, use Visual Studio 2015.
+3. To write a work plan, use MS Project Manager 2007 and higher.
+4. Use GIT (gitlab.com) to store the source code.
 
-###  Требования к используемым технологиям
-1.	GUI может быть написано на C# или Qt или другом фреймворке.
-2.	Для разработки использовать Visual Studio 2015.
-3.	Для написания плана работ использовать MS Project Manager 2007 и выше.
-4.	Для хранения исходного кода использовать GIT(gitlab.com).
-
-###  Детали реализации
-1.	User Interface
-    -   Функциональность:
-        -   Создать диск (с указанием пути к файлу, пароля, размера диска)
-        -   Монтировать диск (с указанием пути к файлу и проверкой пароля)
-        -   Демонтировать указанный диск
-        -   Просмотреть список смонтированных дисков (буква диска, размер, путь к файлу)
-        
-           Реализовать интерфейс с помощью консольного приложения или GUI.
-2.	Драйвер – драйвер виртуального диска, перенаправляющий данные в файл, с шифрованием.
+### Implementation Details
+1. User Interface
+    - Functionality:
+        - Create a disk (indicating the path to the file, password, disk size)
+        - Mount the drive (with the path to the file and password verification)
+        - dismount the specified drive
+        - View the list of mounted disks (drive letter, size, file path)
+        
+           Implement the interface using a console application or GUI.
+2. Driver - a virtual disk driver that redirects data to a file with encryption.
