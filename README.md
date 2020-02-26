@@ -22,6 +22,8 @@ An application for creating and working with virtual encrypted logical drives.
 1.	User Interface
     -   Functionality:
         -   Create a disk (with the path to the file, password, disk size)
+        -   Encryption mode selection
+        -   Copy parse files
         -   Mount disk (with the path to the file and password verification)
         -   Dismount the specified drive
         -   View the list of mounted disks (drive letter, size, file path)
